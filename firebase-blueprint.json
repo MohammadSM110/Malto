@@ -1,0 +1,141 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile in the Maalto free giveaway platform",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "maxLength": 150 },
+        "avatarUrl": { "type": "string", "maxLength": 500 },
+        "city": { "type": "string", "maxLength": 50 },
+        "district": { "type": "string", "maxLength": 50 },
+        "bio": { "type": "string", "maxLength": 300 },
+        "donatedCount": { "type": "number" },
+        "receivedCount": { "type": "number" },
+        "createdAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["uid", "displayName", "createdAt"]
+    },
+    "GiveawayItem": {
+      "title": "GiveawayItem",
+      "description": "100% free giveaway item listed on Maalto without price or payments",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 120 },
+        "description": { "type": "string", "maxLength": 1500 },
+        "category": { "type": "string", "maxLength": 50 },
+        "categoryLabel": { "type": "string", "maxLength": 60 },
+        "condition": { "type": "string", "enum": ["کاملاً نو", "در حد نو", "سالم", "نیازمند تعمیر"] },
+        "city": { "type": "string", "maxLength": 50 },
+        "district": { "type": "string", "maxLength": 50 },
+        "location": { "type": "string", "maxLength": 120 },
+        "pickupAddress": { "type": "string", "maxLength": 300 },
+        "deliveryMethod": { "type": "string", "enum": ["pickup", "courier", "any"] },
+        "deliveryLabel": { "type": "string", "maxLength": 60 },
+        "urgentPickup": { "type": "boolean" },
+        "imageUrl": { "type": "string", "maxLength": 1000 },
+        "images": { "type": "array" },
+        "donorId": { "type": "string", "maxLength": 128 },
+        "donorName": { "type": "string", "maxLength": 100 },
+        "donorBadge": { "type": "string", "maxLength": 60 },
+        "viewsCount": { "type": "number" },
+        "requestsCount": { "type": "number" },
+        "status": { "type": "string", "enum": ["available", "reserved", "given"] },
+        "createdAt": { "type": "string", "maxLength": 50 },
+        "updatedAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["id", "title", "description", "category", "condition", "city", "district", "imageUrl", "donorId", "donorName", "status", "createdAt"]
+    },
+    "ItemRequest": {
+      "title": "ItemRequest",
+      "description": "A claim or pickup request made by a community member for a free giveaway item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "itemId": { "type": "string", "maxLength": 128 },
+        "itemTitle": { "type": "string", "maxLength": 120 },
+        "itemImageUrl": { "type": "string", "maxLength": 1000 },
+        "requesterId": { "type": "string", "maxLength": 128 },
+        "requesterName": { "type": "string", "maxLength": 100 },
+        "donorId": { "type": "string", "maxLength": 128 },
+        "donorName": { "type": "string", "maxLength": 100 },
+        "message": { "type": "string", "maxLength": 1000 },
+        "pickupOption": { "type": "string", "enum": ["pickup", "courier", "any"] },
+        "status": { "type": "string", "enum": ["pending", "accepted", "declined", "completed"] },
+        "createdAt": { "type": "string", "maxLength": 50 },
+        "updatedAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["id", "itemId", "itemTitle", "requesterId", "requesterName", "donorId", "message", "status", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Notification for request updates or item messages",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "type": { "type": "string", "enum": ["new_request", "request_accepted", "request_declined", "item_comment"] },
+        "title": { "type": "string", "maxLength": 120 },
+        "body": { "type": "string", "maxLength": 500 },
+        "itemId": { "type": "string", "maxLength": 128 },
+        "requestId": { "type": "string", "maxLength": 128 },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["id", "userId", "type", "title", "body", "read", "createdAt"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Taxonomy category for classifying free items",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 50 },
+        "label": { "type": "string", "maxLength": 60 },
+        "icon": { "type": "string", "maxLength": 50 },
+        "sortOrder": { "type": "number" },
+        "itemCount": { "type": "number" }
+      },
+      "required": ["id", "label", "sortOrder"]
+    },
+    "Location": {
+      "title": "Location",
+      "description": "City and neighborhood registry for pickup coordination",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 50 },
+        "cityName": { "type": "string", "maxLength": 50 },
+        "districts": { "type": "array" }
+      },
+      "required": ["id", "cityName", "districts"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles and donation stats"
+    },
+    "/items/{itemId}": {
+      "schema": "GiveawayItem",
+      "description": "100% free giveaway items available for community claiming"
+    },
+    "/requests/{requestId}": {
+      "schema": "ItemRequest",
+      "description": "Claim and coordination requests between community members"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "In-app notifications for item requests and statuses"
+    },
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Categorization taxonomy for donations"
+    },
+    "/locations/{locationId}": {
+      "schema": "Location",
+      "description": "Cities and neighborhood regions"
+    }
+  }
+}

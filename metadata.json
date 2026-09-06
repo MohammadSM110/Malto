@@ -1,0 +1,7 @@
+{
+  "name": "Maalto | مالتو",
+  "description": "سیستم دیزاین مالتو — پلتفرم بومی اهدای رایگان کالا و چرخه بخشش وسایل بر اساس طراحی فیگما با پشتیبانی کامل راست‌چین (RTL)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
