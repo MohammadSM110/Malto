@@ -270,7 +270,7 @@ function MaaltoApp() {
     description: 'کاملاً سالم و کم‌کارکرد، اهدای رایگان به دانش‌آموز یا فرد علاقه‌مند به ورزش.',
     condition: 'سالم',
     timeAgo: 'امروز',
-    imageUrl: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=1200&q=80',
+    imageUrl: './images/items/hero-bike.jpg',
     donorName: 'محمدرضا کاظمی',
     city: `${activeCity} / مرکز شهر`,
   };
@@ -283,7 +283,7 @@ function MaaltoApp() {
       description: 'چند دست سرهمی و پاپوش کاملاً نو و سالم، جنس نخ پنبه ضد حساسیت.',
       condition: 'سالم',
       timeAgo: 'دیروز',
-      imageUrl: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80',
+      imageUrl: './images/items/baby-clothes-app.jpg',
       donorName: 'سارا رادمهر',
       location: 'تهران / شهرک غرب',
     },
@@ -293,7 +293,7 @@ function MaaltoApp() {
       description: 'میز کار چوبی سبک با پایه‌های فلزی مقاوم، مناسب اتاق خواب و مطالعه.',
       condition: 'در حد نو',
       timeAgo: 'امروز',
-      imageUrl: 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&w=600&q=80',
+      imageUrl: './images/items/study-table.jpg',
       donorName: 'امیرحسین پارسا',
       location: 'تهران / سعادت‌آباد',
     },
@@ -303,7 +303,7 @@ function MaaltoApp() {
       description: '۱۲ جلد کتاب نفیس ادبیات فارسی و رمان‌های مطرح جهان با صحافی تمیز.',
       condition: 'سالم',
       timeAgo: '۲ روز پیش',
-      imageUrl: 'https://images.unsplash.com/photo-1495446815901-a7297e633e8d?auto=format&fit=crop&w=600&q=80',
+      imageUrl: './images/items/books-app.jpg',
       donorName: 'دکتر بهرامی',
       location: 'تهران / پونک',
     },
@@ -313,7 +313,7 @@ function MaaltoApp() {
       description: 'ساز تمیز همراه با کاور ضدآب، اهدای رایگان به هنرجوی مبتدی موسیقی.',
       condition: 'سالم',
       timeAgo: '۳ روز پیش',
-      imageUrl: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?auto=format&fit=crop&w=600&q=80',
+      imageUrl: './images/items/tennis-racket.jpg',
       donorName: 'نیما علیزاده',
       location: 'تهران / ستارخان',
     },
@@ -323,7 +323,7 @@ function MaaltoApp() {
       description: 'گیاه آپارتمانی شاداب و تصفیه‌کننده هوا با خاک تقویت‌شده و گلدان سرامیکی.',
       condition: 'کاملاً نو',
       timeAgo: 'دیروز',
-      imageUrl: 'https://images.unsplash.com/photo-1509423350716-97f9360b4e09?auto=format&fit=crop&w=600&q=80',
+      imageUrl: './images/items/plant-app.jpg',
       donorName: 'مهشید رضوی',
       location: 'تهران / صادقیه',
     },
@@ -429,10 +429,10 @@ function MaaltoApp() {
       timeAgo: 'لحظاتی پیش',
       imageUrl:
         newItem.category === 'پوشیدنی'
-          ? 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=600&q=80'
+          ? './images/items/baby-clothes-app.jpg'
           : newItem.category === 'کتاب'
-          ? 'https://images.unsplash.com/photo-1495446815901-a7297e633e8d?auto=format&fit=crop&w=600&q=80'
-          : 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&w=600&q=80',
+          ? './images/items/books-app.jpg'
+          : './images/items/study-table.jpg',
       donorName: 'شما (اهداکننده)',
       location: newItem.location,
     };
@@ -454,147 +454,9 @@ function MaaltoApp() {
         dir === 'rtl' ? 'font-persian' : 'font-latin'
       }`}
     >
-      {/* Universal Desktop/Tablet Header */}
-      <Header
-        currentLang={dir === 'rtl' ? 'fa' : 'en'}
-        onToggleLang={toggleDirection}
-        unreadCount={realUnreadNotifsCount}
-        onSearchClick={() => {
-          setViewMode('app');
-          setMobileTab('explore');
-        }}
-        onNotificationsClick={() => {
-          setViewMode('app');
-          setIsAddItemOpen(false);
-          setSelectedDetailItem(null);
-          setMobileTab('messages');
-        }}
-        onProfileClick={() => setIsAuthModalOpen(true)}
-        onDonateClick={() => setIsDonateModalOpen(true)}
-      />
-
-      {/* Mode Switcher & Global Controls Banner */}
-      <div className="w-full bg-white border-b border-[#E2E8F0] py-2 px-4 select-none">
-        <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 font-bold text-[#2563EB] bg-[#EFF6FF] px-2.5 py-1 rounded-lg border border-[#BFDBFE]">
-              <Gift size={15} />
-              <span>پلتفرم اهدای رایگان مالتو (بدون قیمت و خرید/فروش)</span>
-            </span>
-
-            <button
-              type="button"
-              onClick={() => setIsAuthModalOpen(true)}
-              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#F8FAFC] hover:bg-[#F1F5F9] text-[#334155] border border-[#E2E8F0] transition-colors cursor-pointer"
-            >
-              <User size={13} className="text-[#2563EB]" />
-              <span className="font-semibold">
-                {userProfile?.displayName ? userProfile.displayName : currentUser ? 'کاربر متصل' : 'ورود / هویت'}
-              </span>
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="flex bg-[#F1F5F9] p-0.5 rounded-xl border border-[#E2E8F0]">
-              <button
-                type="button"
-                onClick={() => {
-                  setViewMode('app');
-                  setIsAddItemOpen(false);
-                  setSelectedDetailItem(null);
-                  setMobileTab('home');
-                }}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
-                  viewMode === 'app' && !isAddItemOpen && !selectedDetailItem && mobileTab === 'home'
-                    ? 'bg-white text-[#0F172A] shadow-xs font-bold'
-                    : 'text-[#64748B] hover:text-[#0F172A]'
-                }`}
-              >
-                <Smartphone size={14} />
-                <span>خانه (فید فیگما)</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setViewMode('app');
-                  setIsAddItemOpen(false);
-                  setSelectedDetailItem(null);
-                  setMobileTab('explore');
-                }}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
-                  viewMode === 'app' && !isAddItemOpen && !selectedDetailItem && mobileTab === 'explore'
-                    ? 'bg-white text-[#2563EB] shadow-xs font-bold'
-                    : 'text-[#64748B] hover:text-[#0F172A]'
-                }`}
-              >
-                <Compass size={14} />
-                <span>کاوش هدایا (Explore)</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setViewMode('app');
-                  setIsAddItemOpen(true);
-                  setSelectedDetailItem(null);
-                }}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
-                  viewMode === 'app' && isAddItemOpen
-                    ? 'bg-white text-[#2563EB] shadow-xs font-bold'
-                    : 'text-[#64748B] hover:text-[#0F172A]'
-                }`}
-              >
-                <PlusCircle size={14} />
-                <span>ثبت هدیه (Add Item)</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setViewMode('app');
-                  setIsAddItemOpen(false);
-                  setSelectedDetailItem(selectedDetailItem || EXPLORE_ITEMS[0]);
-                }}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
-                  viewMode === 'app' && !isAddItemOpen && selectedDetailItem
-                    ? 'bg-white text-[#2563EB] shadow-xs font-bold'
-                    : 'text-[#64748B] hover:text-[#0F172A]'
-                }`}
-              >
-                <Eye size={14} />
-                <span>جزئیات کالا (Detail)</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setViewMode('tokens');
-                  setIsAddItemOpen(false);
-                  setSelectedDetailItem(null);
-                }}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
-                  viewMode === 'tokens'
-                    ? 'bg-white text-[#0F172A] shadow-xs font-bold'
-                    : 'text-[#64748B] hover:text-[#0F172A]'
-                }`}
-              >
-                <Layers size={14} />
-                <span>دیزاین سیستم و توکن‌ها</span>
-              </button>
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={toggleDirection}
-              className="text-xs h-8 px-2.5"
-            >
-              {dir.toUpperCase()} ({dir === 'rtl' ? 'راست‌چین' : 'چپ‌چین'})
-            </Button>
-          </div>
-        </div>
-      </div>
-
       {/* Floating Action / Feedback Toast */}
       {requestToast && (
-        <div className="fixed top-20 inset-inline-end-6 z-50 animate-in fade-in slide-in-from-top-3 duration-300">
+        <div className="fixed top-5 inset-inline-end-6 z-50 animate-in fade-in slide-in-from-top-3 duration-300">
           <div className="bg-[#0F172A] text-white text-xs px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2.5 max-w-sm border border-slate-700">
             <CheckCircle2 size={16} className="text-[#22C55E] shrink-0" />
             <span className="leading-relaxed">{requestToast}</span>
@@ -655,7 +517,7 @@ function MaaltoApp() {
               {/* TAB 1: HOME FEED */}
               {mobileTab === 'home' && (
                 <main className="flex-1 w-full max-w-md mx-auto px-4 py-5 flex flex-col gap-4 pb-24">
-                  {/* Feed Header directly matching Figma */}
+                  {/* Feed Header with welcome greeting, notification bell & login door icons */}
                   <FeedHeader
                     greeting={APP_CONFIG.greeting}
                     location={userLocationLabel}
@@ -664,6 +526,14 @@ function MaaltoApp() {
                     categories={categories}
                     activeCategory={activeCategory}
                     onSelectCategory={setActiveCategory}
+                    unreadCount={realUnreadNotifsCount}
+                    isAuthenticated={!!currentUser}
+                    onNotificationClick={() => {
+                      setIsAddItemOpen(false);
+                      setSelectedDetailItem(null);
+                      setMobileTab('messages');
+                    }}
+                    onLoginClick={() => setIsAuthModalOpen(true)}
                   />
 
                   {/* Golden Rule Notice for Free Donation */}

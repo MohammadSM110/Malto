@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '../utils/cn.ts';
-import { MapPin, Search, Bell, Globe, Plus, LogIn, X } from 'lucide-react';
+import { MapPin, Search, Bell, Globe, Plus, LogIn, DoorOpen, X } from 'lucide-react';
 import { CategoryPill } from './Badge.tsx';
 import { APP_CONFIG, CATEGORIES_CONFIG } from '../config/navigation.ts';
 import { toPersianDigits } from '../utils/persian.ts';
@@ -14,6 +14,10 @@ export interface FeedHeaderProps {
   activeCategory?: string;
   onSelectCategory?: (id: string) => void;
   className?: string;
+  onNotificationClick?: () => void;
+  onLoginClick?: () => void;
+  unreadCount?: number;
+  isAuthenticated?: boolean;
 }
 
 const DEFAULT_FEED_CATEGORIES = CATEGORIES_CONFIG.map((c) => ({
@@ -22,11 +26,12 @@ const DEFAULT_FEED_CATEGORIES = CATEGORIES_CONFIG.map((c) => ({
 }));
 
 /**
- * Feed Header directly matching the Figma design screenshot:
+ * Feed Header matching the user specification:
  * 1. Warm Persian greeting: "کاربر عزیز امروز چی می‌خوای مالتو باشه:)"
- * 2. City & neighborhood indicator: "تهران / شهرک غرب" with pin icon
- * 3. Search input with "کمد لباس" style placeholder
- * 4. Horizontal category pills (همه, کتاب, مبلمان, سرگرمی, پوشیدنی, ابزار, کودک...)
+ * 2. Action icons right next to greeting: Notification bell & Door entry/login icon
+ * 3. City & neighborhood indicator: "تهران / شهرک غرب" with pin icon
+ * 4. Search input with clear button
+ * 5. Horizontal category pills (همه, کتاب, مبلمان, سرگرمی, پوشیدنی, ابزار, کودک...)
  */
 export const FeedHeader: React.FC<FeedHeaderProps> = ({
   greeting = APP_CONFIG.greeting,
@@ -37,17 +42,58 @@ export const FeedHeader: React.FC<FeedHeaderProps> = ({
   activeCategory = 'all',
   onSelectCategory,
   className,
+  onNotificationClick,
+  onLoginClick,
+  unreadCount = 0,
+  isAuthenticated = false,
 }) => {
   return (
     <header className={cn('w-full flex flex-col gap-3.5 text-start select-none', className)}>
-      {/* Top row: Greeting & Location */}
-      <div className="flex flex-col gap-1">
-        <h1 className="text-base sm:text-lg font-bold text-[#0F172A] tracking-tight">
-          {greeting}
-        </h1>
-        <div className="flex items-center gap-1.5 text-xs text-[#64748B]">
-          <MapPin size={14} className="text-[#64748B] shrink-0" />
-          <span>{location}</span>
+      {/* Top row: Greeting & Action Icons (Notification + Door login) */}
+      <div className="flex items-center justify-between gap-2.5">
+        <div className="flex flex-col gap-1 min-w-0 flex-1">
+          <h1 className="text-base sm:text-lg font-bold text-[#0F172A] tracking-tight truncate">
+            {greeting}
+          </h1>
+          <div className="flex items-center gap-1.5 text-xs text-[#64748B]">
+            <MapPin size={14} className="text-[#64748B] shrink-0" />
+            <span>{location}</span>
+          </div>
+        </div>
+
+        {/* Action icons right next to the greeting */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Notification Icon */}
+          <button
+            type="button"
+            onClick={onNotificationClick}
+            className="relative w-10 h-10 rounded-2xl bg-white hover:bg-[#F1F5F9] text-[#334155] hover:text-[#2563EB] border border-[#E2E8F0] shadow-xs flex items-center justify-center transition-all cursor-pointer active:scale-95"
+            title="اعلان‌ها و پیام‌ها"
+            aria-label="اعلان‌ها"
+          >
+            <Bell size={19} />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-[#EF4444] text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-xs">
+                {toPersianDigits(unreadCount)}
+              </span>
+            )}
+          </button>
+
+          {/* Door Icon (login / entry) */}
+          <button
+            type="button"
+            onClick={onLoginClick}
+            className={cn(
+              'w-10 h-10 rounded-2xl border shadow-xs flex items-center justify-center transition-all cursor-pointer active:scale-95',
+              isAuthenticated
+                ? 'bg-[#EFF6FF] text-[#2563EB] border-[#BFDBFE]'
+                : 'bg-white hover:bg-[#F1F5F9] text-[#334155] hover:text-[#2563EB] border-[#E2E8F0]'
+            )}
+            title={isAuthenticated ? 'پروفایل کاربری / خروج' : 'ورود به حساب کاربری'}
+            aria-label="ورود و حساب کاربری"
+          >
+            <DoorOpen size={19} />
+          </button>
         </div>
       </div>
 

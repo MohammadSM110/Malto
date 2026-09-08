@@ -72,32 +72,32 @@ export interface AddItemFlowProps {
 const PRESET_SAMPLE_PHOTOS = [
   {
     name: 'کتاب‌های رمان و شعر',
-    url: 'https://images.unsplash.com/photo-1495446815901-a7297e633e8d?auto=format&fit=crop&w=800&q=80',
+    url: './images/items/kids-books.jpg',
     category: 'books',
   },
   {
     name: 'میز تحریر و کار چوبی',
-    url: 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&w=800&q=80',
+    url: './images/items/study-table.jpg',
     category: 'home',
   },
   {
     name: 'دوچرخه شهری ۲۶',
-    url: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=800&q=80',
+    url: './images/items/mountain-bike.jpg',
     category: 'entertainment',
   },
   {
     name: 'لباس نوزادی و کودک',
-    url: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80',
+    url: './images/items/baby-clothes-app.jpg',
     category: 'kids',
   },
   {
     name: 'گیتار و ساز موسیقی',
-    url: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?auto=format&fit=crop&w=800&q=80',
+    url: './images/items/tennis-racket.jpg',
     category: 'entertainment',
   },
   {
     name: 'گیاه آپارتمانی شاداب',
-    url: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?auto=format&fit=crop&w=800&q=80',
+    url: './images/items/plant-app.jpg',
     category: 'plants',
   },
 ];
@@ -437,7 +437,7 @@ export const AddItemFlow: React.FC<AddItemFlowProps> = ({
 
       // Default fallback image if nothing was uploaded
       if (finalImageUrls.length === 0) {
-        finalImageUrls.push('https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&w=800&q=80');
+        finalImageUrls.push('./images/items/study-table.jpg');
       }
 
       // 2. Real Firestore document creation
@@ -1281,7 +1281,7 @@ export const AddItemFlow: React.FC<AddItemFlowProps> = ({
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="sm:w-44 aspect-video sm:aspect-square rounded-2xl overflow-hidden border border-[#E2E8F0] bg-slate-200 shrink-0">
                   <img
-                    src={images[0] || 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&w=800&q=80'}
+                    src={images[0] || './images/items/study-table.jpg'}
                     alt={title}
                     className="w-full h-full object-cover"
                   />

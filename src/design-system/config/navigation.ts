@@ -101,7 +101,7 @@ export const APP_CONFIG = {
   englishName: 'Maalto',
   tagline: 'پلتفرم اهدای رایگان کالا',
   freeBadge: '۱۰۰٪ رایگان',
-  greeting: 'کاربر عزیز امروز چی می‌خوای مالتو باشه:)',
+  greeting: 'کاربر عزیز امروز چی میخوای مال تو باشه :)',
   defaultLocation: 'تهران / شهرک غرب',
   defaultCity: 'تهران',
   defaultDistrict: 'شهرک غرب',
