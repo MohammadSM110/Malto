@@ -17,13 +17,22 @@ interface AuthPromptConfig {
   actionType?: 'create_giveaway' | 'request_item' | 'manage_content' | 'general';
 }
 
+export interface RegisterParams {
+  displayName: string;
+  city: string;
+  district: string;
+  bio?: string;
+  email?: string;
+}
+
 interface AuthContextType {
   currentUser: FirebaseUser | null;
   userProfile: UserProfile | null;
   isAuthenticated: boolean;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
-  signInAsDemoUser: (name?: string) => Promise<void>;
+  signInAsDemoUser: (name?: string, district?: string, city?: string) => Promise<void>;
+  registerUser: (params: RegisterParams) => Promise<void>;
   signOut: () => Promise<void>;
   updateUserProfileData: (data: Partial<UserProfile>) => Promise<void>;
   isAuthModalOpen: boolean;
@@ -158,7 +167,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signInAsDemoUser = async (customName = 'محمدرضا کاظمی') => {
+  const signInAsDemoUser = async (
+    customName = 'محمدرضا کاظمی',
+    customDistrict = 'شهرک غرب',
+    customCity = 'تهران'
+  ) => {
     setLoading(true);
     try {
       let uid: string;
@@ -174,8 +187,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         uid,
         displayName: customName,
         email: `${uid.slice(0, 8)}@maalto.ir`,
-        city: 'تهران',
-        district: 'شهرک غرب',
+        city: customCity,
+        district: customDistrict,
         bio: 'عضو فعال جامعه بخشش کالا و اهدای ۱۰۰٪ رایگان',
         donatedCount: 3,
         receivedCount: 1,
@@ -185,6 +198,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       onLoginSuccess();
     } catch (err) {
       console.error('Demo user sign-in error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const registerUser = async ({ displayName, city, district, bio, email }: RegisterParams) => {
+    setLoading(true);
+    try {
+      let uid: string;
+      try {
+        const cred = await signInAnonymously(auth);
+        uid = cred.user.uid;
+      } catch (anonErr) {
+        console.warn('Anonymous auth fallback during registration:', anonErr);
+        uid = `registered_user_${Date.now()}`;
+      }
+
+      const profile = await upsertUserProfile({
+        uid,
+        displayName: displayName.trim(),
+        email: email?.trim() || `${uid.slice(0, 8)}@maalto.ir`,
+        city: city || 'تهران',
+        district: district.trim(),
+        bio: bio?.trim() || 'عضو جامعه اهدای ۱۰۰٪ رایگان مالتو',
+        donatedCount: 0,
+        receivedCount: 0,
+        createdAt: new Date().toISOString(),
+      });
+      setUserProfile(profile);
+      onLoginSuccess();
+    } catch (err) {
+      console.error('Registration error:', err);
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -218,13 +264,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         currentUser,
         userProfile,
+        isAuthenticated,
         loading,
         signInWithGoogle,
         signInAsDemoUser,
+        registerUser,
         signOut,
         updateUserProfileData,
         isAuthModalOpen,
         setIsAuthModalOpen,
+        authPrompt,
+        requireAuth,
+        closeAuthModal,
       }}
     >
       {children}

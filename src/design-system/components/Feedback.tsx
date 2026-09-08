@@ -226,3 +226,42 @@ export const DonationFeedCardSkeleton: React.FC = () => {
     </div>
   );
 };
+
+export interface LoadingStateProps {
+  message?: string;
+  className?: string;
+  variant?: 'spinner' | 'feed-skeleton';
+  count?: number;
+}
+
+export const LoadingState: React.FC<LoadingStateProps> = ({
+  message = 'در حال دریافت اطلاعات...',
+  className,
+  variant = 'spinner',
+  count = 3,
+}) => {
+  if (variant === 'feed-skeleton') {
+    return (
+      <div className={cn('flex flex-col gap-3 w-full', className)}>
+        {Array.from({ length: count }).map((_, i) => (
+          <DonationFeedCardSkeleton key={i} />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        'rounded-2xl border border-[#E2E8F0] bg-white/70 p-8 text-center flex flex-col items-center justify-center max-w-sm mx-auto',
+        className
+      )}
+    >
+      <div className="w-10 h-10 rounded-xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center mb-3 animate-spin">
+        <RefreshCw size={20} />
+      </div>
+      <p className="text-xs text-[#64748B] font-medium">{message}</p>
+    </div>
+  );
+};
+

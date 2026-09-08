@@ -31,8 +31,8 @@ service cloud.firestore {
       return data.uid is string && data.uid.size() <= 128 &&
              data.displayName is string && data.displayName.size() >= 2 && data.displayName.size() <= 100 &&
              data.createdAt is string && data.createdAt.size() <= 50 &&
+             data.district is string && data.district.size() >= 2 && data.district.size() <= 60 &&
              (!('city' in data) || (data.city is string && data.city.size() <= 50)) &&
-             (!('district' in data) || (data.district is string && data.district.size() <= 50)) &&
              (!('bio' in data) || (data.bio is string && data.bio.size() <= 500)) &&
              (!('donatedCount' in data) || data.donatedCount is number) &&
              (!('receivedCount' in data) || data.receivedCount is number);
@@ -66,7 +66,7 @@ service cloud.firestore {
              data.condition in ['کاملاً نو', 'در حد نو', 'سالم', 'نیازمند تعمیر'] &&
              data.city is string && data.city.size() <= 50 &&
              data.district is string && data.district.size() <= 50 &&
-             data.imageUrl is string && data.imageUrl.size() <= 1000 &&
+             data.imageUrl is string && data.imageUrl.size() <= 1000000 &&
              data.donorId is string && data.donorId.size() <= 128 &&
              data.donorName is string && data.donorName.size() <= 100 &&
              data.status in ['available', 'reserved', 'given'] &&
@@ -89,18 +89,29 @@ service cloud.firestore {
                        incoming().donorId == request.auth.uid &&
                        isValidGiveawayItem(incoming());
 
-      // Donor can update item details; any user can bump view counter
-      allow update: if isSignedIn() &&
-                       isValidId(itemId) &&
+      // Donor can update item details; any user (guest or authenticated) can bump view counter
+      allow update: if isValidId(itemId) &&
                        (
+                         // View counter tracking (accessible to all visitors)
                          (
-                           existing().donorId == request.auth.uid &&
-                           incoming().donorId == existing().donorId &&
-                           incoming().createdAt == existing().createdAt &&
-                           isValidGiveawayItem(incoming())
+                           incoming().diff(existing()).affectedKeys().hasOnly(['viewsCount']) &&
+                           incoming().viewsCount is number &&
+                           incoming().viewsCount >= existing().viewsCount
                          ) ||
+                         // Requests counter increment or donor edits (requires authentication)
                          (
-                           incoming().diff(existing()).affectedKeys().hasOnly(['viewsCount', 'requestsCount'])
+                           isSignedIn() &&
+                           (
+                             (
+                               existing().donorId == request.auth.uid &&
+                               incoming().donorId == existing().donorId &&
+                               incoming().createdAt == existing().createdAt &&
+                               isValidGiveawayItem(incoming())
+                             ) ||
+                             (
+                               incoming().diff(existing()).affectedKeys().hasOnly(['viewsCount', 'requestsCount'])
+                             )
+                           )
                          )
                        );
 
@@ -123,7 +134,7 @@ service cloud.firestore {
              data.status in ['pending', 'accepted', 'declined', 'completed'] &&
              data.createdAt is string && data.createdAt.size() <= 50 &&
              (!('pickupOption' in data) || (data.pickupOption in ['pickup', 'courier', 'any'])) &&
-             (!('itemImageUrl' in data) || (data.itemImageUrl is string && data.itemImageUrl.size() <= 1000));
+             (!('itemImageUrl' in data) || (data.itemImageUrl is string && data.itemImageUrl.size() <= 1000000));
     }
 
     match /requests/{requestId} {
@@ -193,7 +204,7 @@ service cloud.firestore {
 
     match /locations/{locationId} {
       allow read: if true;
-      allow write: if false;
+      allow write: if isSignedIn();
     }
   }
 }

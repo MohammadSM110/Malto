@@ -16,7 +16,7 @@
         "receivedCount": { "type": "number" },
         "createdAt": { "type": "string", "maxLength": 50 }
       },
-      "required": ["uid", "displayName", "createdAt"]
+      "required": ["uid", "displayName", "district", "createdAt"]
     },
     "GiveawayItem": {
       "title": "GiveawayItem",

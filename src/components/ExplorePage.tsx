@@ -42,6 +42,8 @@ import {
 
 export interface ExplorePageProps {
   items?: ExploreItem[];
+  isLoading?: boolean;
+  error?: string | null;
   onSelectItem?: (item: ExploreItem) => void;
   onRequestDonation?: (item: ExploreItem) => void;
   onOpenDonateModal?: () => void;
@@ -50,6 +52,8 @@ export interface ExplorePageProps {
 
 export const ExplorePage: React.FC<ExplorePageProps> = ({
   items,
+  isLoading: isLoadingProp,
+  error: errorProp,
   onSelectItem,
   onRequestDonation,
   onOpenDonateModal,
@@ -62,13 +66,16 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
   const [selectedCondition, setSelectedCondition] = useState('همه وضعیت‌ها');
   const [onlyUrgent, setOnlyUrgent] = useState(false);
   const [deliveryFilter, setDeliveryFilter] = useState<'all' | 'pickup' | 'courier'>('all');
-  const [sortBy, setSortBy] = useState<'newest' | 'popular' | 'urgent'>('newest');
+  const [sortBy, setSortBy] = useState<'popular' | 'newest' | 'urgent'>('popular');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
 
   // States for verification & interaction
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
+
+  const effectiveLoading = isLoadingProp !== undefined ? isLoadingProp : isLoading;
+  const effectiveError = Boolean(errorProp || hasError);
 
   // Quick discovery chips
   const quickSearches = [
@@ -82,6 +89,14 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
 
   // Filtering & Sorting Logic
   const sourceItems = items && items.length > 0 ? items : EXPLORE_ITEMS;
+
+  const availableDistricts = useMemo(() => {
+    const set = new Set<string>();
+    sourceItems.forEach((i) => {
+      if (i.district) set.add(i.district);
+    });
+    return ['همه محله‌ها', ...Array.from(set)];
+  }, [sourceItems]);
 
   const filteredItems = useMemo(() => {
     return sourceItems.filter((item) => {
@@ -129,14 +144,20 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
       return true;
     }).sort((a, b) => {
       if (sortBy === 'popular') {
-        return b.requestsCount - a.requestsCount;
+        // Internal ranking signal based on views count (descending)
+        const viewsDiff = (b.viewsCount || 0) - (a.viewsCount || 0);
+        if (viewsDiff !== 0) return viewsDiff;
+        return (b.requestsCount || 0) - (a.requestsCount || 0);
       }
       if (sortBy === 'urgent') {
         return (b.urgentPickup ? 1 : 0) - (a.urgentPickup ? 1 : 0);
       }
-      return 0; // Default order
+      if (sortBy === 'newest') {
+        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+      }
+      return (b.viewsCount || 0) - (a.viewsCount || 0);
     });
-  }, [searchQuery, selectedCategory, selectedDistrict, selectedCondition, onlyUrgent, deliveryFilter, sortBy]);
+  }, [sourceItems, searchQuery, selectedCategory, selectedDistrict, selectedCondition, onlyUrgent, deliveryFilter, sortBy]);
 
   // Reset all filters
   const handleResetFilters = () => {
@@ -146,7 +167,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
     setSelectedCondition('همه وضعیت‌ها');
     setOnlyUrgent(false);
     setDeliveryFilter('all');
-    setSortBy('newest');
+    setSortBy('popular');
     setHasError(false);
   };
 
@@ -217,9 +238,10 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
           </div>
         </div>
 
-        {/* Search Bar Input */}
+        {/* Search Bar Input - Search icon on LEFT side with appropriate padding */}
         <div className="relative w-full">
-          <div className="absolute inset-inline-start-3.5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-[#94A3B8]">
+          {/* Search icon on the LEFT side */}
+          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-[#94A3B8]">
             <Search size={18} />
           </div>
           <input
@@ -227,13 +249,15 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="جستجو در میان وسایل اهدایی (مثلاً: دوچرخه، میز مطالعه، کتاب کنکور، گیتار...)"
-            className="w-full bg-[#F8FAFC] text-[#0F172A] text-sm rounded-2xl border border-[#E2E8F0] py-3.5 ps-11 pe-10 placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] focus:bg-white transition-all shadow-xs"
+            className={`w-full bg-[#F8FAFC] text-[#0F172A] text-sm rounded-2xl border border-[#E2E8F0] py-3.5 pl-11 placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] focus:bg-white transition-all shadow-xs ${
+              searchQuery ? 'pr-9' : 'pr-4'
+            }`}
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery('')}
-              className="absolute inset-inline-end-3 top-1/2 -translate-y-1/2 p-1 text-[#94A3B8] hover:text-[#0F172A] rounded-lg cursor-pointer transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#94A3B8] hover:text-[#0F172A] rounded-lg cursor-pointer transition-colors"
               aria-label="پاک کردن جستجو"
             >
               <X size={16} />
@@ -368,7 +392,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
               onChange={(e) => setSelectedDistrict(e.target.value)}
               className="text-xs bg-[#F8FAFC] text-[#0F172A] border border-[#E2E8F0] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 cursor-pointer"
             >
-              {DISTRICTS.map((d) => (
+              {availableDistricts.map((d) => (
                 <option key={d} value={d}>
                   {d}
                 </option>
@@ -411,8 +435,8 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
                 onChange={(e) => setSortBy(e.target.value as any)}
                 className="text-xs bg-[#F8FAFC] text-[#0F172A] border border-[#E2E8F0] rounded-xl px-2.5 py-1.5 focus:outline-none cursor-pointer font-medium"
               >
+                <option value="popular">محبوب‌ترین‌ها (سراسر شهرها)</option>
                 <option value="newest">جدیدترین‌ها</option>
-                <option value="popular">بیشترین تقاضا</option>
                 <option value="urgent">تحویل فوری</option>
               </select>
             </div>
@@ -636,18 +660,18 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
       {/* 5. Main Results Container with Loading / Error / Empty / Success states */}
       <div>
         {/* Error State */}
-        {hasError ? (
+        {effectiveError ? (
           <div className="my-6">
             <ErrorState
               title="خطا در دریافت لیست کالاهای اهدایی"
-              message="ارتباط با پایگاه داده هدایای مالتو برقرار نشد یا بارگذاری اطلاعات با تأخیر مواجه شد. لطفاً دوباره تلاش فرمایید."
+              message={errorProp || "ارتباط با پایگاه داده هدایای مالتو برقرار نشد یا بارگذاری اطلاعات با تأخیر مواجه شد. لطفاً دوباره تلاش فرمایید."}
               onRetry={() => {
                 setHasError(false);
                 handleTriggerLoading();
               }}
             />
           </div>
-        ) : isLoading ? (
+        ) : effectiveLoading ? (
           /* Loading State (Skeletons) */
           viewMode === 'grid' ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

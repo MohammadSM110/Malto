@@ -20,8 +20,8 @@ export const ConditionBadge: React.FC<ConditionBadgeProps> = ({
   return (
     <span
       className={cn(
-        'inline-flex items-center justify-center text-xs font-medium px-2.5 py-0.5 rounded-lg',
-        'bg-[#94A3B8]/20 text-[#334155] border border-[#CBD5E1]/70 backdrop-blur-xs select-none',
+        'inline-flex items-center justify-center text-xs font-semibold px-2.5 py-1 rounded-xl',
+        'bg-slate-900/80 text-white border border-white/20 backdrop-blur-md shadow-xs select-none',
         className
       )}
     >
@@ -84,28 +84,28 @@ export const Badge: React.FC<BadgeProps> = ({
 }) => {
   const variantStyles: Record<BadgeVariant, { container: string; dot?: string }> = {
     neutral: {
-      container: 'bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0]',
-      dot: 'bg-[#94A3B8]',
+      container: 'bg-[#475569] text-white border border-[#334155] shadow-2xs',
+      dot: 'bg-white',
     },
     brand: {
-      container: 'bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE]',
-      dot: 'bg-[#2563EB]',
+      container: 'bg-[#2563EB] text-white border border-[#1D4ED8] shadow-2xs',
+      dot: 'bg-white',
     },
     success: {
-      container: 'bg-[#DCFCE7] text-[#166534] border border-[#BBF7D0]',
-      dot: 'bg-[#22C55E]',
+      container: 'bg-[#16A34A] text-white border border-[#15803D] shadow-2xs',
+      dot: 'bg-white',
     },
     warning: {
-      container: 'bg-[#FEF9C3] text-[#854D0E] border border-[#FEF08A]',
-      dot: 'bg-[#EAB308]',
+      container: 'bg-[#D97706] text-white border border-[#B45309] shadow-2xs',
+      dot: 'bg-white',
     },
     error: {
-      container: 'bg-[#FEE2E2] text-[#991B1B] border border-[#FECACA]',
-      dot: 'bg-[#EF4444]',
+      container: 'bg-[#DC2626] text-white border border-[#B91C1C] shadow-2xs',
+      dot: 'bg-white',
     },
     outline: {
-      container: 'bg-transparent text-[#475569] border border-[#CBD5E1]',
-      dot: 'bg-[#64748B]',
+      container: 'bg-slate-800 text-white border border-slate-700 shadow-2xs',
+      dot: 'bg-white',
     },
   };
 

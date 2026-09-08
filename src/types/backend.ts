@@ -3,8 +3,8 @@ export interface UserProfile {
   displayName: string;
   email?: string;
   avatarUrl?: string;
-  city?: string;
-  district?: string;
+  city: string;
+  district: string;
   bio?: string;
   donatedCount: number;
   receivedCount: number;

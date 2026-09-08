@@ -1,8 +1,9 @@
 import React from 'react';
 import { cn } from '../utils/cn.ts';
-import { Home, Compass, Plus, MessageSquare, User } from 'lucide-react';
+import { NAV_ITEMS, RouteId } from '../config/navigation.ts';
+import { toPersianDigits } from '../utils/persian.ts';
 
-export type BottomNavTab = 'home' | 'explore' | 'donate' | 'messages' | 'profile';
+export type BottomNavTab = RouteId;
 
 export interface BottomNavigationProps {
   activeTab?: BottomNavTab;
@@ -19,35 +20,6 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   className,
   isFixed = true,
 }) => {
-  const tabs: { id: BottomNavTab; label: string; icon: React.ReactNode; isAction?: boolean }[] = [
-    {
-      id: 'home',
-      label: 'خانه',
-      icon: <Home size={20} />,
-    },
-    {
-      id: 'explore',
-      label: 'کاوش',
-      icon: <Compass size={20} />,
-    },
-    {
-      id: 'donate',
-      label: 'اهدا کردن',
-      icon: <Plus size={22} className="stroke-[2.5]" />,
-      isAction: true,
-    },
-    {
-      id: 'messages',
-      label: 'پیام‌ها',
-      icon: <MessageSquare size={20} />,
-    },
-    {
-      id: 'profile',
-      label: 'پروفایل',
-      icon: <User size={20} />,
-    },
-  ];
-
   return (
     <nav
       className={cn(
@@ -59,18 +31,19 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
       aria-label="ناوبری اصلی مالتو"
     >
       <div className="max-w-md mx-auto px-3 py-1.5 flex items-center justify-around">
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab.id;
+        {NAV_ITEMS.map((item) => {
+          const isActive = activeTab === item.id;
+          const IconComponent = item.icon;
 
           // Prominent center "اهدا کردن" button
-          if (tab.isAction) {
+          if (item.isAction) {
             return (
               <button
-                key={tab.id}
+                key={item.id}
                 type="button"
-                onClick={() => onTabChange?.(tab.id)}
+                onClick={() => onTabChange?.(item.id)}
                 className="flex flex-col items-center justify-center -mt-5 group focus:outline-none cursor-pointer"
-                aria-label={tab.label}
+                aria-label={item.label}
               >
                 <div
                   className={cn(
@@ -81,10 +54,10 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
                       : 'bg-[#2563EB] group-hover:bg-[#1D4ED8]'
                   )}
                 >
-                  {tab.icon}
+                  <IconComponent size={22} className="stroke-[2.5]" />
                 </div>
                 <span className="text-[10px] font-semibold text-[#475569] mt-1">
-                  {tab.label}
+                  {item.label}
                 </span>
               </button>
             );
@@ -92,9 +65,9 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
 
           return (
             <button
-              key={tab.id}
+              key={item.id}
               type="button"
-              onClick={() => onTabChange?.(tab.id)}
+              onClick={() => onTabChange?.(item.id)}
               className={cn(
                 'relative flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all duration-150 cursor-pointer',
                 'active:scale-95 focus:outline-none',
@@ -104,12 +77,14 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
               )}
             >
               <div className="relative">
-                {tab.icon}
-                {tab.id === 'messages' && messageBadgeCount > 0 && (
-                  <span className="absolute -top-1 -inset-inline-end-1.5 w-2 h-2 rounded-full bg-[#2563EB] ring-2 ring-white" />
+                <IconComponent size={20} />
+                {item.id === 'messages' && messageBadgeCount > 0 && (
+                  <span className="absolute -top-1.5 -inset-inline-end-2.5 min-w-[17px] h-4 px-1 rounded-full bg-[#2563EB] text-white text-[9px] font-num font-bold flex items-center justify-center ring-2 ring-white shadow-2xs">
+                    {toPersianDigits(messageBadgeCount > 9 ? '+9' : messageBadgeCount)}
+                  </span>
                 )}
               </div>
-              <span className="text-[11px] mt-1 leading-none">{tab.label}</span>
+              <span className="text-[11px] mt-1 leading-none">{item.label}</span>
             </button>
           );
         })}
@@ -117,3 +92,4 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
     </nav>
   );
 };
+

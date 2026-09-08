@@ -185,8 +185,8 @@ export const RequestsManager: React.FC<{
           <Bell size={14} />
           <span>اعلان‌ها</span>
           {unreadCount > 0 && (
-            <span className="w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
-              {unreadCount}
+            <span className="w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-num font-bold flex items-center justify-center">
+              {toPersianDigits(unreadCount)}
             </span>
           )}
         </button>
@@ -341,6 +341,25 @@ export const RequestsManager: React.FC<{
       {/* TAB 3: NOTIFICATIONS */}
       {activeTab === 'notifications' && (
         <div className="flex flex-col gap-2.5">
+          {unreadCount > 0 && (
+            <div className="flex items-center justify-between px-1">
+              <span className="text-xs text-[#64748B]">
+                {toPersianDigits(unreadCount)} اعلان خوانده‌نشده
+              </span>
+              <button
+                type="button"
+                onClick={async () => {
+                  const unread = notifications.filter((n) => !n.read);
+                  for (const n of unread) {
+                    await markNotificationAsRead(n.id);
+                  }
+                }}
+                className="text-xs text-[#2563EB] font-bold hover:underline cursor-pointer"
+              >
+                علامت‌گذاری همه به عنوان خوانده‌شده
+              </button>
+            </div>
+          )}
           {notifications.length === 0 ? (
             <div className="bg-white rounded-3xl p-6 border border-[#E2E8F0] text-center shadow-xs">
               <div className="w-12 h-12 rounded-2xl bg-[#F8FAFC] text-[#94A3B8] flex items-center justify-center mx-auto mb-3">

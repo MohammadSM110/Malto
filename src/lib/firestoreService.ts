@@ -24,6 +24,7 @@ import {
   RequestStatus,
 } from '../types/backend.ts';
 import { EXPLORE_ITEMS, EXPLORE_CATEGORIES, DISTRICTS } from '../data/exploreData.ts';
+import { IRAN_CITIES_DATA } from '../data/locationsData.ts';
 
 // Collection names
 export const COLLECTIONS = {
@@ -105,7 +106,7 @@ export function subscribeItems(
         id: docSnap.id,
       }));
       // Sort newest first
-      items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      items.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
       callback(items);
     },
     (error) => {
@@ -471,61 +472,87 @@ export async function upsertUserProfile(
 }
 
 // -----------------------------------------------------------------------------
-// SEED INITIAL DATABASE IF EMPTY
+// SEED INITIAL DATABASE & LOCATIONS
 // -----------------------------------------------------------------------------
 
 /**
- * Seed initial sample catalog from exploreData.ts into Firestore if database is empty
+ * Fetch all registered Iranian cities & neighborhoods, with fallback
+ */
+export async function getLocations(): Promise<LocationDoc[]> {
+  try {
+    const snap = await getDocs(collection(db, COLLECTIONS.LOCATIONS));
+    if (!snap.empty) {
+      return snap.docs.map((d) => d.data() as LocationDoc);
+    }
+  } catch (err) {
+    console.warn('Could not fetch locations from Firestore, using local database:', err);
+  }
+  return IRAN_CITIES_DATA;
+}
+
+/**
+ * Seed initial sample catalog of 30 realistic giveaway items and locations from exploreData.ts into Firestore
  */
 export async function seedInitialDataIfEmpty(currentUserId?: string): Promise<boolean> {
   try {
-    const itemsCol = collection(db, COLLECTIONS.ITEMS);
-    const existing = await getDocs(query(itemsCol, limit(1)));
-
-    if (!existing.empty) {
-      return false; // Already has items
-    }
-
-    console.info('Seeding initial Maalto giveaway catalog into Firestore...');
     const donorId = currentUserId || 'community_seed_donor';
+    let seededCount = 0;
 
+    // 1. Seed or sync any missing realistic giveaway items (total 30 items)
     for (const item of EXPLORE_ITEMS) {
-      const itemDoc: GiveawayItemDoc = {
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        category: item.category,
-        categoryLabel: item.categoryLabel,
-        condition: item.condition,
-        city: item.city || 'تهران',
-        district: item.district || 'شهرک غرب',
-        location: item.location || 'تهران / شهرک غرب',
-        pickupAddress: item.pickupAddress,
-        deliveryMethod: item.deliveryMethod,
-        deliveryLabel: item.deliveryLabel,
-        urgentPickup: !!item.urgentPickup,
-        imageUrl: item.imageUrl,
-        images: item.images || [item.imageUrl],
-        donorId,
-        donorName: item.donorName,
-        donorBadge: item.donorBadge,
-        donorJoined: item.donorJoined,
-        donorDonatedCount: item.donorDonatedCount || 3,
-        donorResponseTime: item.donorResponseTime,
-        donorRating: item.donorRating,
-        viewsCount: item.viewsCount || 10,
-        requestsCount: item.requestsCount || 0,
-        status: 'available',
-        specs: item.specs,
-        createdAt: new Date(Date.now() - Math.random() * 86400000 * 4).toISOString(),
-      };
-
       const docRef = doc(db, COLLECTIONS.ITEMS, item.id);
-      await setDoc(docRef, itemDoc);
+      const snap = await getDoc(docRef);
+
+      if (!snap.exists()) {
+        const itemDoc: GiveawayItemDoc = {
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          category: item.category,
+          categoryLabel: item.categoryLabel,
+          condition: item.condition,
+          city: item.city || 'تهران',
+          district: item.district || 'شهرک غرب',
+          location: item.location || `${item.city} / ${item.district}`,
+          pickupAddress: item.pickupAddress,
+          deliveryMethod: item.deliveryMethod,
+          deliveryLabel: item.deliveryLabel,
+          urgentPickup: !!item.urgentPickup,
+          imageUrl: item.imageUrl,
+          images: item.images || [item.imageUrl],
+          donorId,
+          donorName: item.donorName,
+          donorBadge: item.donorBadge,
+          donorJoined: item.donorJoined,
+          donorDonatedCount: item.donorDonatedCount || 3,
+          donorResponseTime: item.donorResponseTime,
+          donorRating: item.donorRating,
+          viewsCount: item.viewsCount || 10,
+          requestsCount: item.requestsCount || 0,
+          status: 'available',
+          specs: item.specs,
+          createdAt: item.createdAt || new Date().toISOString(),
+        };
+
+        await setDoc(docRef, itemDoc);
+        seededCount++;
+      }
     }
 
-    console.info('Successfully seeded Maalto items into Firestore.');
-    return true;
+    // 2. Seed locations database (major Iranian cities and neighborhoods) into Firestore
+    for (const loc of IRAN_CITIES_DATA) {
+      const locRef = doc(db, COLLECTIONS.LOCATIONS, loc.id);
+      const locSnap = await getDoc(locRef);
+      if (!locSnap.exists()) {
+        await setDoc(locRef, loc);
+      }
+    }
+
+    if (seededCount > 0) {
+      console.info(`Successfully seeded ${seededCount} new giveaway items and locations database into Firestore.`);
+      return true;
+    }
+    return false;
   } catch (e) {
     console.warn('Seeding check note:', e);
     return false;

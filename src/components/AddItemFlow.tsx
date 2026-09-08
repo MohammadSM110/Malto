@@ -6,6 +6,7 @@ import { Input } from '../design-system/components/Input.tsx';
 import { Textarea } from '../design-system/components/Textarea.tsx';
 import { ConditionBadge } from '../design-system/components/Badge.tsx';
 import { ExploreItem, EXPLORE_CATEGORIES, DISTRICTS } from '../data/exploreData.ts';
+import { IRANIAN_CITIES, getDistrictsForCity } from '../data/locationsData.ts';
 import { useAuth } from '../context/AuthContext.tsx';
 import { uploadItemPhoto } from '../lib/storage.ts';
 import { createItem } from '../lib/firestoreService.ts';
@@ -101,7 +102,7 @@ const PRESET_SAMPLE_PHOTOS = [
   },
 ];
 
-const CITIES = ['تهران', 'کرج', 'اصفهان', 'مشهد', 'شیراز', 'تبریز'];
+const CITIES = IRANIAN_CITIES;
 
 const CONDITION_OPTIONS: Array<{
   id: 'کاملاً نو' | 'در حد نو' | 'سالم' | 'نیازمند تعمیر';
@@ -1139,7 +1140,14 @@ export const AddItemFlow: React.FC<AddItemFlowProps> = ({
                 </label>
                 <select
                   value={city}
-                  onChange={(e) => setCity(e.target.value)}
+                  onChange={(e) => {
+                    const newCity = e.target.value;
+                    setCity(newCity);
+                    const dists = getDistrictsForCity(newCity);
+                    if (dists.length > 0) {
+                      setDistrict(dists[0]);
+                    }
+                  }}
                   className="w-full h-11 px-3.5 rounded-2xl bg-white border border-[#CBD5E1] text-xs text-[#0F172A] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 cursor-pointer"
                 >
                   {CITIES.map((c) => (
@@ -1152,14 +1160,14 @@ export const AddItemFlow: React.FC<AddItemFlowProps> = ({
 
               <div>
                 <label className="text-xs font-semibold text-[#0F172A] block mb-1.5">
-                  محله / منطقه:
+                  محله / منطقه (الزامی): *
                 </label>
                 <select
                   value={district}
                   onChange={(e) => setDistrict(e.target.value)}
                   className="w-full h-11 px-3.5 rounded-2xl bg-white border border-[#CBD5E1] text-xs text-[#0F172A] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 cursor-pointer"
                 >
-                  {DISTRICTS.filter((d) => d !== 'همه محله‌ها').map((d) => (
+                  {getDistrictsForCity(city).map((d) => (
                     <option key={d} value={d}>
                       {d}
                     </option>

@@ -49,8 +49,8 @@ export const HeroCard: React.FC<HeroCardProps> = ({
         className="w-full h-full object-cover object-center group-hover:scale-[1.02] transition-transform duration-500"
       />
 
-      {/* Top Condition Badge */}
-      <div className="absolute top-3.5 inset-inline-start-3.5 z-10">
+      {/* Top Condition Badge with balanced margin from right edge */}
+      <div className="absolute top-5 right-6 sm:top-6 sm:right-7 z-10">
         <ConditionBadge condition={data.condition} />
       </div>
 

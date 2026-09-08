@@ -14,7 +14,6 @@ import {
   Flag,
   MapPin,
   Clock,
-  Eye,
   MessageCircle,
   ShieldCheck,
   Gift,
@@ -35,6 +34,7 @@ import {
 
 export interface ItemDetailPageProps {
   item: ExploreItem;
+  allItems?: ExploreItem[];
   onBack: () => void;
   onSelectRelatedItem?: (item: ExploreItem) => void;
   onRequestSubmitted?: (item: ExploreItem, message: string) => void;
@@ -43,6 +43,7 @@ export interface ItemDetailPageProps {
 
 export const ItemDetailPage: React.FC<ItemDetailPageProps> = ({
   item,
+  allItems,
   onBack,
   onSelectRelatedItem,
   onRequestSubmitted,
@@ -105,7 +106,8 @@ export const ItemDetailPage: React.FC<ItemDetailPageProps> = ({
   const images = item.images && item.images.length > 0 ? item.images : [item.imageUrl];
 
   // Related items from same category
-  const relatedItems = EXPLORE_ITEMS.filter(
+  const sourcePool = allItems && allItems.length > 0 ? allItems : EXPLORE_ITEMS;
+  const relatedItems = sourcePool.filter(
     (other) => other.id !== item.id && (other.category === item.category || other.district === item.district)
   ).slice(0, 3);
 
@@ -337,8 +339,8 @@ export const ItemDetailPage: React.FC<ItemDetailPageProps> = ({
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
 
-            {/* Overlaid Badges */}
-            <div className="absolute top-4 inset-inline-start-4 flex flex-col gap-2 pointer-events-none">
+            {/* Overlaid Badges with balanced spacing from right edge */}
+            <div className="absolute top-5 right-6 sm:top-6 sm:right-7 flex flex-col gap-2 pointer-events-none z-10">
               <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#2563EB]/95 backdrop-blur-md text-white text-xs font-bold shadow-md">
                 <Gift size={13} />
                 <span>اهدای ۱۰۰٪ رایگان</span>
@@ -365,10 +367,6 @@ export const ItemDetailPage: React.FC<ItemDetailPageProps> = ({
                 </span>
               </div>
               <div className="flex items-center gap-3 font-num">
-                <span className="flex items-center gap-1">
-                  <Eye size={13} />
-                  <span>{toPersianDigits(item.viewsCount)} بازدید</span>
-                </span>
                 <span className="flex items-center gap-1 text-emerald-300 font-bold">
                   <Sparkles size={13} />
                   <span>{toPersianDigits(item.requestsCount)} متقاضی</span>
@@ -549,31 +547,52 @@ export const ItemDetailPage: React.FC<ItemDetailPageProps> = ({
           {/* ========================================================================= */}
           {/* PRIMARY ACTION: REQUEST / CLAIM THIS FREE ITEM */}
           {/* ========================================================================= */}
-          <div className="sticky bottom-4 z-20 bg-white/95 backdrop-blur-md p-4 rounded-3xl border border-[#BFDBFE] shadow-lg flex flex-col gap-2.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-[#0F172A] flex items-center gap-1.5">
-                <Gift size={15} className="text-[#2563EB]" />
-                <span>هدیه ۱۰۰٪ رایگان</span>
-              </span>
-              <span className="text-[11px] text-[#2563EB] bg-[#EFF6FF] px-2 py-0.5 rounded-full font-medium">
-                بدون نیاز به کارت بانکی یا وجه
-              </span>
+          {Boolean(
+            (userProfile?.uid || currentUser?.uid) &&
+            (item as any).donorId &&
+            (item as any).donorId === (userProfile?.uid || currentUser?.uid)
+          ) ? (
+            <div className="sticky bottom-4 z-20 bg-emerald-50/95 backdrop-blur-md p-4 rounded-3xl border border-emerald-200 shadow-lg flex flex-col gap-2.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-emerald-950 flex items-center gap-1.5">
+                  <ShieldCheck size={16} className="text-emerald-600" />
+                  <span>این هدیه متعلق به شماست (اهداکننده)</span>
+                </span>
+                <span className="text-[11px] text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full font-medium">
+                  کالای من
+                </span>
+              </div>
+              <p className="text-xs text-emerald-800 leading-relaxed">
+                شما اهداکننده این کالا هستید. وضعیت درخواست‌های دریافتی برای این کالا را می‌توانید در بخش گفتگوها و اعلان‌ها پیگیری و مدیریت کنید.
+              </p>
             </div>
+          ) : (
+            <div className="sticky bottom-4 z-20 bg-white/95 backdrop-blur-md p-4 rounded-3xl border border-[#BFDBFE] shadow-lg flex flex-col gap-2.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-[#0F172A] flex items-center gap-1.5">
+                  <Gift size={15} className="text-[#2563EB]" />
+                  <span>هدیه ۱۰۰٪ رایگان</span>
+                </span>
+                <span className="text-[11px] text-[#2563EB] bg-[#EFF6FF] px-2 py-0.5 rounded-full font-medium">
+                  بدون نیاز به کارت بانکی یا وجه
+                </span>
+              </div>
 
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={handleInitiateClaim}
-              className="w-full text-sm font-bold shadow-md h-12 flex items-center justify-center gap-2"
-            >
-              <Send size={16} />
-              <span>درخواست دریافت این هدیه (رایگان)</span>
-            </Button>
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={handleInitiateClaim}
+                className="w-full text-sm font-bold shadow-md h-12 flex items-center justify-center gap-2"
+              >
+                <Send size={16} />
+                <span>درخواست دریافت این هدیه (رایگان)</span>
+              </Button>
 
-            <p className="text-[11px] text-[#64748B] text-center">
-              با ثبت درخواست، پیام شما مستقیماً برای اهداکننده ارسال و گفتگو آغاز می‌شود.
-            </p>
-          </div>
+              <p className="text-[11px] text-[#64748B] text-center">
+                با ثبت درخواست، پیام شما مستقیماً برای اهداکننده ارسال و گفتگو آغاز می‌شود.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

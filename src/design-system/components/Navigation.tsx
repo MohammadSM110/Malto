@@ -1,7 +1,9 @@
 import React from 'react';
 import { cn } from '../utils/cn.ts';
-import { MapPin, Search, Bell, User, Globe, SlidersHorizontal, Heart, Plus, LogIn } from 'lucide-react';
+import { MapPin, Search, Bell, Globe, Plus, LogIn, X } from 'lucide-react';
 import { CategoryPill } from './Badge.tsx';
+import { APP_CONFIG, CATEGORIES_CONFIG } from '../config/navigation.ts';
+import { toPersianDigits } from '../utils/persian.ts';
 
 export interface FeedHeaderProps {
   greeting?: string;
@@ -14,6 +16,11 @@ export interface FeedHeaderProps {
   className?: string;
 }
 
+const DEFAULT_FEED_CATEGORIES = CATEGORIES_CONFIG.map((c) => ({
+  id: c.id,
+  label: c.feedLabel,
+}));
+
 /**
  * Feed Header directly matching the Figma design screenshot:
  * 1. Warm Persian greeting: "کاربر عزیز امروز چی می‌خوای مالتو باشه:)"
@@ -22,19 +29,11 @@ export interface FeedHeaderProps {
  * 4. Horizontal category pills (همه, کتاب, مبلمان, سرگرمی, پوشیدنی, ابزار, کودک...)
  */
 export const FeedHeader: React.FC<FeedHeaderProps> = ({
-  greeting = 'کاربر عزیز امروز چی می‌خوای مالتو باشه:)',
-  location = 'تهران / شهرک غرب',
+  greeting = APP_CONFIG.greeting,
+  location = APP_CONFIG.defaultLocation,
   searchValue = '',
   onSearchChange,
-  categories = [
-    { id: 'all', label: 'همه' },
-    { id: 'book', label: 'کتاب' },
-    { id: 'furniture', label: 'مبلمان' },
-    { id: 'entertainment', label: 'سرگرمی' },
-    { id: 'clothing', label: 'پوشیدنی' },
-    { id: 'tools', label: 'ابزار' },
-    { id: 'kids', label: 'کودک' },
-  ],
+  categories = DEFAULT_FEED_CATEGORIES,
   activeCategory = 'all',
   onSelectCategory,
   className,
@@ -52,23 +51,35 @@ export const FeedHeader: React.FC<FeedHeaderProps> = ({
         </div>
       </div>
 
-      {/* Search Input matching Figma */}
+      {/* Search Input matching Figma - Search icon moved to LEFT side with proper padding */}
       <div className="relative w-full">
-        <div className="absolute inset-inline-start-3.5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-[#94A3B8]">
+        {/* Search icon on the LEFT side */}
+        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none text-[#94A3B8]">
           <Search size={18} />
         </div>
         <input
           type="text"
           value={searchValue}
           onChange={(e) => onSearchChange?.(e.target.value)}
-          placeholder="کمد لباس، دوچرخه، کتاب..."
+          placeholder={APP_CONFIG.searchPlaceholder}
           className={cn(
             'w-full bg-white text-[#0F172A] text-sm rounded-2xl border border-[#E2E8F0]',
-            'py-3 ps-11 pe-4 placeholder:text-[#94A3B8]',
+            'py-3 pr-4 pl-11 placeholder:text-[#94A3B8]',
+            searchValue ? 'pr-9' : 'pr-4',
             'shadow-[0_1px_2px_rgba(15,23,42,0.03)]',
             'focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition-all'
           )}
         />
+        {searchValue && (
+          <button
+            type="button"
+            onClick={() => onSearchChange?.('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#94A3B8] hover:text-[#0F172A] rounded-lg cursor-pointer transition-colors"
+            aria-label="پاک کردن جستجو"
+          >
+            <X size={15} />
+          </button>
+        )}
       </div>
 
       {/* Horizontal Category Carousel */}
@@ -131,14 +142,15 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
             <div className="flex flex-col text-start">
               <span className="font-extrabold tracking-tight text-lg text-[#0F172A] leading-none">
-                مالتو • Maalto
+                {APP_CONFIG.name}
               </span>
               <span className="text-[10px] tracking-wide text-[#64748B] font-medium leading-tight">
-                پلتفرم اهدای رایگان کالا
+                {APP_CONFIG.tagline}
               </span>
             </div>
           </div>
         </div>
+
 
         {/* Center Search Bar */}
         <div className="flex-1 max-w-md hidden md:block">
@@ -146,13 +158,14 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={onSearchClick}
             className="w-full flex items-center justify-between px-3.5 py-2 bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-xl cursor-pointer shadow-xs text-sm text-[#94A3B8] transition-all"
           >
-            <div className="flex items-center gap-2.5">
-              <Search size={16} className="text-[#94A3B8]" />
-              <span>جستجو در وسایل اهدایی، کتاب، دوچرخه، مبلمان...</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs">جستجو در وسایل اهدایی، کتاب، دوچرخه، مبلمان...</span>
+              <span className="text-[11px] bg-[#F1F5F9] text-[#64748B] px-1.5 py-0.5 rounded font-mono">
+                رایگان
+              </span>
             </div>
-            <span className="text-[11px] bg-[#F1F5F9] text-[#64748B] px-1.5 py-0.5 rounded font-mono">
-              رایگان
-            </span>
+            {/* Search icon on the LEFT side */}
+            <Search size={16} className="text-[#94A3B8]" />
           </div>
         </div>
 
@@ -192,7 +205,9 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Bell size={20} />
             {unreadCount > 0 && isAuthenticated && (
-              <span className="absolute top-1.5 inset-inline-end-1.5 w-2 h-2 rounded-full bg-[#2563EB] ring-2 ring-white" />
+              <span className="absolute -top-1 -inset-inline-end-1 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-num font-bold flex items-center justify-center ring-2 ring-white shadow-2xs">
+                {toPersianDigits(unreadCount > 9 ? '+9' : unreadCount)}
+              </span>
             )}
           </button>
 
