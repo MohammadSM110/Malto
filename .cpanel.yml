@@ -1,0 +1,16 @@
+---
+deployment:
+  tasks:
+    # 1. Define target deployment path (default: public_html for main domain)
+    # If deploying to a subdomain, change to: $HOME/public_html/subdomain/ or $HOME/subdomain.domain.com/
+    - export DEPLOYPATH=$HOME/public_html/
+    - /bin/mkdir -p $DEPLOYPATH
+
+    # 2. Build if Node & npm exist on the cPanel server, and reset any tracked changes to keep repo clean
+    - which node >/dev/null 2>&1 && which npm >/dev/null 2>&1 && npm install --no-save && npm run build && git checkout -- . 2>/dev/null || true
+
+    # 3. Copy production build files (including hidden files like .htaccess) to web root
+    - /bin/cp -R dist/. $DEPLOYPATH/
+
+    # 4. Fallback safeguard: Ensure .htaccess is present in public_html for SPA routing
+    - /bin/cp public/.htaccess $DEPLOYPATH/.htaccess 2>/dev/null || true
