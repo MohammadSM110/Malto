@@ -11,3 +11,8 @@ deployment:
 
     # 3. Ensure Apache .htaccess is present for React SPA routing
     - /bin/cp public/.htaccess $DEPLOYPATH/.htaccess 2>/dev/null || true
+
+    # 4. Ensure correct file and folder permissions for web server (755 folders, 644 files)
+    - /bin/chmod 644 $DEPLOYPATH/index.html 2>/dev/null || true
+    - /bin/chmod 644 $DEPLOYPATH/.htaccess 2>/dev/null || true
+    - /bin/chmod -R 755 $DEPLOYPATH/assets 2>/dev/null || true
