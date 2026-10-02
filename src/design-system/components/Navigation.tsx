@@ -16,6 +16,7 @@ export interface FeedHeaderProps {
   className?: string;
   onNotificationClick?: () => void;
   onLoginClick?: () => void;
+  onLocationClick?: () => void;
   unreadCount?: number;
   isAuthenticated?: boolean;
 }
@@ -27,9 +28,9 @@ const DEFAULT_FEED_CATEGORIES = CATEGORIES_CONFIG.map((c) => ({
 
 /**
  * Feed Header matching the user specification:
- * 1. Warm Persian greeting: "کاربر عزیز امروز چی می‌خوای مالتو باشه:)"
+ * 1. Warm Persian greeting: "همه چیز رایگان مال تو!"
  * 2. Action icons right next to greeting: Notification bell & Door entry/login icon
- * 3. City & neighborhood indicator: "تهران / شهرک غرب" with pin icon
+ * 3. City & neighborhood indicator: "تهران / شهرک غرب" with pin icon (clickable to Explore page)
  * 4. Search input with clear button
  * 5. Horizontal category pills (همه, کتاب, مبلمان, سرگرمی, پوشیدنی, ابزار, کودک...)
  */
@@ -44,6 +45,7 @@ export const FeedHeader: React.FC<FeedHeaderProps> = ({
   className,
   onNotificationClick,
   onLoginClick,
+  onLocationClick,
   unreadCount = 0,
   isAuthenticated = false,
 }) => {
@@ -55,9 +57,16 @@ export const FeedHeader: React.FC<FeedHeaderProps> = ({
           <h1 className="text-base sm:text-lg font-bold text-[#0F172A] tracking-tight truncate">
             {greeting}
           </h1>
-          <div className="flex items-center gap-1.5 text-xs text-[#64748B]">
-            <MapPin size={14} className="text-[#64748B] shrink-0" />
-            <span>{location}</span>
+          <div
+            onClick={onLocationClick}
+            className={cn(
+              'flex items-center gap-1.5 text-xs text-[#64748B] w-fit',
+              onLocationClick && 'cursor-pointer hover:text-[#2563EB] transition-colors group'
+            )}
+            title="مشاهده کالاهای این شهر در صفحه کاوش"
+          >
+            <MapPin size={14} className="text-[#64748B] group-hover:text-[#2563EB] shrink-0 transition-colors" />
+            <span className="group-hover:underline">{location}</span>
           </div>
         </div>
 

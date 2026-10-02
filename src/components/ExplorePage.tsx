@@ -7,6 +7,26 @@ import {
   ExploreItem,
 } from '../data/exploreData.ts';
 import {
+  IRANIAN_CITIES,
+  getDistrictsForCity,
+} from '../data/locationsData.ts';
+
+const POPULAR_CITIES = [
+  'همه شهرها',
+  'تهران',
+  'مشهد',
+  'اصفهان',
+  'شیراز',
+  'تبریز',
+  'کرج',
+  'اهواز',
+  'قم',
+  'رشت',
+  'یزد',
+  'کرمانشاه',
+  'همدان',
+];
+import {
   Button,
   Input,
   CategoryPill,
@@ -61,6 +81,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
 }) => {
   // State management
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCity, setSelectedCity] = useState('همه شهرها');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedDistrict, setSelectedDistrict] = useState('همه محله‌ها');
   const [selectedCondition, setSelectedCondition] = useState('همه وضعیت‌ها');
@@ -90,13 +111,39 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
   // Filtering & Sorting Logic
   const sourceItems = items && items.length > 0 ? items : EXPLORE_ITEMS;
 
-  const availableDistricts = useMemo(() => {
+  const availableCities = useMemo(() => {
     const set = new Set<string>();
     sourceItems.forEach((i) => {
-      if (i.district) set.add(i.district);
+      if (i.city && i.city.trim()) {
+        set.add(i.city.trim());
+      }
+    });
+    IRANIAN_CITIES.forEach((c) => set.add(c));
+    return ['همه شهرها', ...Array.from(set)];
+  }, [sourceItems]);
+
+  const availableDistricts = useMemo(() => {
+    if (selectedCity === 'همه شهرها') {
+      const set = new Set<string>();
+      sourceItems.forEach((i) => {
+        if (i.district && i.district.trim()) set.add(i.district.trim());
+      });
+      return ['همه محله‌ها', ...Array.from(set)];
+    }
+
+    const cityDistricts = getDistrictsForCity(selectedCity);
+    const set = new Set<string>(cityDistricts);
+    sourceItems.forEach((i) => {
+      if (
+        (i.city === selectedCity || i.location?.includes(selectedCity)) &&
+        i.district &&
+        i.district.trim()
+      ) {
+        set.add(i.district.trim());
+      }
     });
     return ['همه محله‌ها', ...Array.from(set)];
-  }, [sourceItems]);
+  }, [sourceItems, selectedCity]);
 
   const filteredItems = useMemo(() => {
     return sourceItems.filter((item) => {
@@ -108,7 +155,21 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
         const matchesCategory = item.categoryLabel.toLowerCase().includes(query);
         const matchesLocation = item.location.toLowerCase().includes(query);
         const matchesDonor = item.donorName.toLowerCase().includes(query);
-        if (!matchesTitle && !matchesDesc && !matchesCategory && !matchesLocation && !matchesDonor) {
+        const matchesCity = item.city ? item.city.toLowerCase().includes(query) : false;
+        if (!matchesTitle && !matchesDesc && !matchesCategory && !matchesLocation && !matchesDonor && !matchesCity) {
+          return false;
+        }
+      }
+
+      // City filter
+      if (selectedCity !== 'همه شهرها') {
+        const itemCity = item.city || '';
+        const itemLocation = item.location || '';
+        const matchesCity =
+          itemCity === selectedCity ||
+          itemLocation.includes(selectedCity) ||
+          itemLocation.startsWith(selectedCity);
+        if (!matchesCity) {
           return false;
         }
       }
@@ -157,11 +218,12 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
       }
       return (b.viewsCount || 0) - (a.viewsCount || 0);
     });
-  }, [sourceItems, searchQuery, selectedCategory, selectedDistrict, selectedCondition, onlyUrgent, deliveryFilter, sortBy]);
+  }, [sourceItems, searchQuery, selectedCity, selectedCategory, selectedDistrict, selectedCondition, onlyUrgent, deliveryFilter, sortBy]);
 
   // Reset all filters
   const handleResetFilters = () => {
     setSearchQuery('');
+    setSelectedCity('همه شهرها');
     setSelectedCategory('all');
     setSelectedDistrict('همه محله‌ها');
     setSelectedCondition('همه وضعیت‌ها');
@@ -173,6 +235,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
 
   // Count active filters
   const activeFiltersCount =
+    (selectedCity !== 'همه شهرها' ? 1 : 0) +
     (selectedCategory !== 'all' ? 1 : 0) +
     (selectedDistrict !== 'همه محله‌ها' ? 1 : 0) +
     (selectedCondition !== 'همه وضعیت‌ها' ? 1 : 0) +
@@ -200,41 +263,11 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
               <span>کاوش و کشف هدایای رایگان • Maalto Explore</span>
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-[#0F172A] tracking-tight mb-1">
-              جستجو و کشف وسایل اهدایی در محله‌های شما
+              جستجو و کشف وسایل اهدایی در شهرهای ایران
             </h1>
             <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed">
-              هزاران وسیله کاملاً سالم، کتاب، دوچرخه، مبلمان و لباس اهدایی آماده واگذاری رایگان به همشهریان
+              هزاران وسیله کاملاً سالم، کتاب، دوچرخه، مبلمان و لباس اهدایی آماده واگذاری رایگان در محله‌ها و شهرهای سراسر کشور
             </p>
-          </div>
-
-          {/* Quick simulation controls for UI review */}
-          <div className="flex items-center gap-2 shrink-0 bg-[#F8FAFC] p-1.5 rounded-2xl border border-[#E2E8F0]">
-            <button
-              type="button"
-              onClick={handleTriggerLoading}
-              className={`text-xs px-2.5 py-1.5 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 ${
-                isLoading
-                  ? 'bg-[#2563EB] text-white border-[#2563EB]'
-                  : 'bg-white text-[#475569] border-[#E2E8F0] hover:text-[#0F172A]'
-              }`}
-              title="تست حالت بارگذاری با اسکلتون"
-            >
-              <RefreshCw size={12} className={isLoading ? 'animate-spin' : ''} />
-              <span>تست لودینگ</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setHasError(!hasError)}
-              className={`text-xs px-2.5 py-1.5 rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 ${
-                hasError
-                  ? 'bg-[#DC2626] text-white border-[#DC2626]'
-                  : 'bg-white text-[#475569] border-[#E2E8F0] hover:text-[#0F172A]'
-              }`}
-              title="تست نمایش خطای دریافت داده"
-            >
-              <AlertTriangle size={12} />
-              <span>تست خطا</span>
-            </button>
           </div>
         </div>
 
@@ -386,11 +419,47 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
               <span>فقط تحویل فوری (امروز)</span>
             </button>
 
+            {/* City Quick Select Dropdown */}
+            <div className="relative flex items-center">
+              <div className="absolute right-2.5 pointer-events-none text-[#2563EB]">
+                <MapPin size={14} />
+              </div>
+              <select
+                id="explore-city-select"
+                value={selectedCity}
+                onChange={(e) => {
+                  setSelectedCity(e.target.value);
+                  setSelectedDistrict('همه محله‌ها');
+                }}
+                className={`text-xs font-semibold bg-[#F8FAFC] hover:bg-white text-[#0F172A] border rounded-xl pr-8 pl-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 cursor-pointer transition-all shadow-xs ${
+                  selectedCity !== 'همه شهرها'
+                    ? 'border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8]'
+                    : 'border-[#E2E8F0]'
+                }`}
+                title="فیلتر بر اساس شهر"
+              >
+                <option value="همه شهرها">همه شهرها (سراسر کشور)</option>
+                {availableCities
+                  .filter((c) => c !== 'همه شهرها')
+                  .map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
             {/* District Quick Select */}
             <select
+              id="explore-district-select"
               value={selectedDistrict}
               onChange={(e) => setSelectedDistrict(e.target.value)}
-              className="text-xs bg-[#F8FAFC] text-[#0F172A] border border-[#E2E8F0] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 cursor-pointer"
+              className={`text-xs bg-[#F8FAFC] hover:bg-white text-[#0F172A] border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 cursor-pointer transition-all shadow-xs ${
+                selectedDistrict !== 'همه محله‌ها'
+                  ? 'border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8] font-bold'
+                  : 'border-[#E2E8F0]'
+              }`}
+              title="فیلتر بر اساس محله"
             >
               {availableDistricts.map((d) => (
                 <option key={d} value={d}>
@@ -401,6 +470,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
 
             {/* Condition Quick Select */}
             <select
+              id="explore-condition-select"
               value={selectedCondition}
               onChange={(e) => setSelectedCondition(e.target.value)}
               className="text-xs bg-[#F8FAFC] text-[#0F172A] border border-[#E2E8F0] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 cursor-pointer"
@@ -431,6 +501,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
             <div className="flex items-center gap-1.5 text-xs text-[#64748B]">
               <span>مرتب‌سازی:</span>
               <select
+                id="explore-sort-select"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
                 className="text-xs bg-[#F8FAFC] text-[#0F172A] border border-[#E2E8F0] rounded-xl px-2.5 py-1.5 focus:outline-none cursor-pointer font-medium"
@@ -475,77 +546,120 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
 
         {/* Expandable Advanced Filter Panel */}
         {isFilterPanelOpen && (
-          <div className="pt-3 border-t border-[#E2E8F0] grid grid-cols-1 sm:grid-cols-3 gap-4 animate-in fade-in duration-200">
-            {/* Delivery Method Filter */}
+          <div className="pt-3 border-t border-[#E2E8F0] flex flex-col gap-4 animate-in fade-in duration-200">
+            {/* Popular Cities Pills Selector */}
             <div>
-              <label className="text-xs font-semibold text-[#0F172A] block mb-1.5">
-                شیوه تحویل کالا:
-              </label>
-              <div className="flex flex-wrap gap-1.5">
-                {[
-                  { id: 'all', label: 'همه روش‌ها' },
-                  { id: 'pickup', label: 'تحویل حضوری' },
-                  { id: 'courier', label: 'ارسال با پیک' },
-                ].map((item) => (
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-bold text-[#0F172A] flex items-center gap-1.5">
+                  <MapPin size={13} className="text-[#2563EB]" />
+                  <span>انتخاب شهر (سراسر ایران):</span>
+                </label>
+                {selectedCity !== 'همه شهرها' && (
                   <button
-                    key={item.id}
                     type="button"
-                    onClick={() => setDeliveryFilter(item.id as any)}
-                    className={`text-xs px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
-                      deliveryFilter === item.id
-                        ? 'bg-[#2563EB] text-white border-[#2563EB]'
+                    onClick={() => {
+                      setSelectedCity('همه شهرها');
+                      setSelectedDistrict('همه محله‌ها');
+                    }}
+                    className="text-[11px] text-[#2563EB] hover:underline cursor-pointer"
+                  >
+                    نمایش همه شهرها
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {POPULAR_CITIES.map((cityName) => (
+                  <button
+                    key={cityName}
+                    type="button"
+                    onClick={() => {
+                      setSelectedCity(cityName);
+                      setSelectedDistrict('همه محله‌ها');
+                    }}
+                    className={`text-xs px-2.5 py-1 rounded-lg border transition-all cursor-pointer font-medium ${
+                      selectedCity === cityName
+                        ? 'bg-[#2563EB] text-white border-[#2563EB] shadow-xs'
                         : 'bg-[#F8FAFC] text-[#475569] border-[#E2E8F0] hover:bg-[#F1F5F9]'
                     }`}
                   >
-                    {item.label}
+                    {cityName}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Quick condition selector */}
-            <div>
-              <label className="text-xs font-semibold text-[#0F172A] block mb-1.5">
-                وضعیت سلامت شیء:
-              </label>
-              <div className="flex flex-wrap gap-1.5">
-                {CONDITIONS.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setSelectedCondition(c)}
-                    className={`text-xs px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
-                      selectedCondition === c
-                        ? 'bg-[#0F172A] text-white border-[#0F172A]'
-                        : 'bg-[#F8FAFC] text-[#475569] border-[#E2E8F0] hover:bg-[#F1F5F9]'
-                    }`}
-                  >
-                    {c}
-                  </button>
-                ))}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-[#F1F5F9]">
+              {/* Delivery Method Filter */}
+              <div>
+                <label className="text-xs font-semibold text-[#0F172A] block mb-1.5">
+                  شیوه تحویل کالا:
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { id: 'all', label: 'همه روش‌ها' },
+                    { id: 'pickup', label: 'تحویل حضوری' },
+                    { id: 'courier', label: 'ارسال با پیک' },
+                  ].map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setDeliveryFilter(item.id as any)}
+                      className={`text-xs px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                        deliveryFilter === item.id
+                          ? 'bg-[#2563EB] text-white border-[#2563EB]'
+                          : 'bg-[#F8FAFC] text-[#475569] border-[#E2E8F0] hover:bg-[#F1F5F9]'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* District direct pills */}
-            <div>
-              <label className="text-xs font-semibold text-[#0F172A] block mb-1.5">
-                محله‌های تحت پوشش:
-              </label>
-              <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
-                {DISTRICTS.map((d) => (
-                  <button
-                    key={d}
-                    type="button"
-                    onClick={() => setSelectedDistrict(d)}
-                    className={`text-[11px] px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
-                      selectedDistrict === d
-                        ? 'bg-[#2563EB] text-white border-[#2563EB]'
-                        : 'bg-[#F8FAFC] text-[#475569] border-[#E2E8F0]'
-                    }`}
-                  >
-                    {d}
-                  </button>
-                ))}
+              {/* Quick condition selector */}
+              <div>
+                <label className="text-xs font-semibold text-[#0F172A] block mb-1.5">
+                  وضعیت سلامت شیء:
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {CONDITIONS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setSelectedCondition(c)}
+                      className={`text-xs px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                        selectedCondition === c
+                          ? 'bg-[#0F172A] text-white border-[#0F172A]'
+                          : 'bg-[#F8FAFC] text-[#475569] border-[#E2E8F0] hover:bg-[#F1F5F9]'
+                      }`}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* District direct pills */}
+              <div>
+                <label className="text-xs font-semibold text-[#0F172A] block mb-1.5">
+                  محله‌های {selectedCity !== 'همه شهرها' ? selectedCity : 'تحت پوشش'}:
+                </label>
+                <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                  {availableDistricts.map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setSelectedDistrict(d)}
+                      className={`text-[11px] px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
+                        selectedDistrict === d
+                          ? 'bg-[#2563EB] text-white border-[#2563EB]'
+                          : 'bg-[#F8FAFC] text-[#475569] border-[#E2E8F0]'
+                      }`}
+                    >
+                      {d}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -555,6 +669,24 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
         {activeFiltersCount > 0 && (
           <div className="pt-2 border-t border-[#F1F5F9] flex flex-wrap items-center gap-1.5">
             <span className="text-[11px] text-[#94A3B8]">فیلترهای فعال:</span>
+
+            {selectedCity !== 'همه شهرها' && (
+              <span className="inline-flex items-center gap-1 text-xs bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE] px-2 py-0.5 rounded-md font-medium">
+                <MapPin size={11} className="shrink-0" />
+                <span>شهر: {selectedCity}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCity('همه شهرها');
+                    setSelectedDistrict('همه محله‌ها');
+                  }}
+                  className="hover:text-red-500 cursor-pointer"
+                  aria-label="حذف فیلتر شهر"
+                >
+                  <X size={12} />
+                </button>
+              </span>
+            )}
 
             {searchQuery && (
               <span className="inline-flex items-center gap-1 text-xs bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE] px-2 py-0.5 rounded-md">
@@ -720,11 +852,13 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({
               icon={<Gift size={32} className="stroke-[1.5]" />}
               title="هیچ کالای اهدایی یافت نشد"
               description={
-                searchQuery
+                selectedCity !== 'همه شهرها'
+                  ? `در حال حاضر هیچ هدیه‌ای در شهر «${selectedCity}» با فیلترهای انتخابی یافت نشد. می‌توانید با انتخاب «همه شهرها» وسایل موجود در سایر شهرهای ایران را بررسی فرمایید.`
+                  : searchQuery
                   ? `هیچ هدیه‌ای با عبارت «${searchQuery}» و فیلترهای انتخابی شما پیدا نشد. می‌توانید با کلمات دیگر جستجو کرده یا فیلترها را حذف کنید.`
                   : 'در حال حاضر کالایی با ترکیب فیلترهای انتخابی در دسترس نیست. می‌توانید فیلترها را بازنشانی فرمایید.'
               }
-              actionLabel="پاک کردن همه فیلترها"
+              actionLabel={selectedCity !== 'همه شهرها' ? "مشاهده همه شهرها" : "پاک کردن همه فیلترها"}
               onAction={handleResetFilters}
               secondaryActionLabel={onOpenDonateModal ? "ثبت این کالا برای اهدا" : undefined}
               onSecondaryAction={onOpenDonateModal}

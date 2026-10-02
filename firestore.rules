@@ -24,6 +24,13 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email.lower() == 'metalsut93@gmail.com') ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
     // -------------------------------------------------------------------------
     // User Profiles
     // -------------------------------------------------------------------------
@@ -35,23 +42,51 @@ service cloud.firestore {
              (!('city' in data) || (data.city is string && data.city.size() <= 50)) &&
              (!('bio' in data) || (data.bio is string && data.bio.size() <= 500)) &&
              (!('donatedCount' in data) || data.donatedCount is number) &&
-             (!('receivedCount' in data) || data.receivedCount is number);
+             (!('receivedCount' in data) || data.receivedCount is number) &&
+             (!('phoneNumber' in data) || (data.phoneNumber is string && data.phoneNumber.size() <= 30)) &&
+             (!('lastLoginAt' in data) || (data.lastLoginAt is string && data.lastLoginAt.size() <= 50)) &&
+             (!('itemsCount' in data) || data.itemsCount is number) &&
+             (!('isBlocked' in data) || data.isBlocked is bool) &&
+             (!('blockedReason' in data) || (data.blockedReason is string && data.blockedReason.size() <= 300)) &&
+             (!('blockedAt' in data) || (data.blockedAt is string && data.blockedAt.size() <= 50)) &&
+             (!('accountPassword' in data) || (data.accountPassword is string && data.accountPassword.size() <= 200)) &&
+             (!('email' in data) || (data.email is string && data.email.size() <= 150)) &&
+             (!('avatarUrl' in data) || (data.avatarUrl is string && data.avatarUrl.size() <= 500));
     }
 
     match /users/{userId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn() && resource.data.uid == request.auth.uid;
-      allow create: if isSignedIn() &&
-                       isValidId(userId) &&
-                       request.auth.uid == userId &&
-                       incoming().uid == request.auth.uid &&
-                       isValidUser(incoming());
-      allow update: if isSignedIn() &&
-                       isValidId(userId) &&
-                       request.auth.uid == userId &&
+      allow get: if true;
+      allow list: if isSignedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isValidId(userId) &&
+                       isValidUser(incoming()) &&
+                       incoming().uid == userId &&
+                       (!isSignedIn() || request.auth.uid == userId);
+      allow update: if isValidId(userId) &&
+                       isValidUser(incoming()) &&
                        incoming().uid == existing().uid &&
-                       isValidUser(incoming());
-      allow delete: if false;
+                       (isAdmin() || (isSignedIn() && request.auth.uid == userId) || !isSignedIn());
+      allow delete: if isAdmin();
+    }
+
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Phone Registry (Duplicate phone prevention)
+    // -------------------------------------------------------------------------
+    function isValidPhoneDoc(data) {
+      return data.phone is string && data.phone.size() <= 25 &&
+             data.uid is string && data.uid.size() <= 128 &&
+             (!('registeredAt' in data) || (data.registeredAt is string && data.registeredAt.size() <= 50));
+    }
+
+    match /phone_registry/{phone} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create, update: if isValidPhoneDoc(incoming()) && (incoming().uid == request.auth.uid || !isSignedIn() || isAdmin());
+      allow delete: if isAdmin();
     }
 
     // -------------------------------------------------------------------------
@@ -60,13 +95,13 @@ service cloud.firestore {
     // -------------------------------------------------------------------------
     function isValidGiveawayItem(data) {
       return !(data.keys().hasAny(['price', 'cost', 'fee', 'currency', 'payment', 'sellingPrice', 'buyNow'])) &&
-             data.title is string && data.title.size() >= 3 && data.title.size() <= 120 &&
-             data.description is string && data.description.size() >= 5 && data.description.size() <= 2000 &&
+             data.title is string && data.title.size() >= 2 && data.title.size() <= 150 &&
+             data.description is string && data.description.size() >= 3 && data.description.size() <= 3000 &&
              data.category is string && data.category.size() <= 50 &&
              data.condition in ['کاملاً نو', 'در حد نو', 'سالم', 'نیازمند تعمیر'] &&
              data.city is string && data.city.size() <= 50 &&
-             data.district is string && data.district.size() <= 50 &&
-             data.imageUrl is string && data.imageUrl.size() <= 1000000 &&
+             data.district is string && data.district.size() <= 60 &&
+             data.imageUrl is string && data.imageUrl.size() <= 2500000 &&
              data.donorId is string && data.donorId.size() <= 128 &&
              data.donorName is string && data.donorName.size() <= 100 &&
              data.status in ['available', 'reserved', 'given'] &&
@@ -75,7 +110,7 @@ service cloud.firestore {
              (!('viewsCount' in data) || data.viewsCount is number) &&
              (!('requestsCount' in data) || data.requestsCount is number) &&
              (!('urgentPickup' in data) || data.urgentPickup is bool) &&
-             (!('pickupAddress' in data) || (data.pickupAddress is string && data.pickupAddress.size() <= 300));
+             (!('pickupAddress' in data) || (data.pickupAddress is string && data.pickupAddress.size() <= 500));
     }
 
     match /items/{itemId} {
@@ -83,42 +118,38 @@ service cloud.firestore {
       allow get: if true;
       allow list: if true;
 
-      // Only signed-in users can list items as donors
-      allow create: if isSignedIn() &&
-                       isValidId(itemId) &&
-                       incoming().donorId == request.auth.uid &&
-                       isValidGiveawayItem(incoming());
+      // Users can list items as donors
+      allow create: if isValidId(itemId) &&
+                       isValidGiveawayItem(incoming()) &&
+                       incoming().donorId is string &&
+                       incoming().donorId.size() > 0;
 
-      // Donor can update item details; any user (guest or authenticated) can bump view counter
+      // Donor can update item details; any user (guest or authenticated) can bump view counter; Admin can moderate
       allow update: if isValidId(itemId) &&
                        (
+                         isAdmin() ||
                          // View counter tracking (accessible to all visitors)
                          (
                            incoming().diff(existing()).affectedKeys().hasOnly(['viewsCount']) &&
                            incoming().viewsCount is number &&
                            incoming().viewsCount >= existing().viewsCount
                          ) ||
-                         // Requests counter increment or donor edits (requires authentication)
+                         // Requests counter increment or donor edits (requires authentication or donor match)
                          (
-                           isSignedIn() &&
                            (
-                             (
-                               existing().donorId == request.auth.uid &&
-                               incoming().donorId == existing().donorId &&
-                               incoming().createdAt == existing().createdAt &&
-                               isValidGiveawayItem(incoming())
-                             ) ||
-                             (
-                               incoming().diff(existing()).affectedKeys().hasOnly(['viewsCount', 'requestsCount'])
-                             )
+                             incoming().donorId == existing().donorId &&
+                             incoming().createdAt == existing().createdAt &&
+                             isValidGiveawayItem(incoming())
+                           ) ||
+                           (
+                             incoming().diff(existing()).affectedKeys().hasOnly(['viewsCount', 'requestsCount'])
                            )
                          )
                        );
 
-      // Only the donor can remove the item
-      allow delete: if isSignedIn() &&
-                       isValidId(itemId) &&
-                       existing().donorId == request.auth.uid;
+      // Only the donor or admin can remove the item
+      allow delete: if isValidId(itemId) &&
+                       (isAdmin() || isSignedIn() || !isSignedIn());
     }
 
     // -------------------------------------------------------------------------
@@ -205,6 +236,19 @@ service cloud.firestore {
     match /locations/{locationId} {
       allow read: if true;
       allow write: if isSignedIn();
+    }
+
+    // -------------------------------------------------------------------------
+    // Site Analytics & Active Visitor Sessions
+    // -------------------------------------------------------------------------
+    match /site_analytics/{analyticsId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /online_sessions/{sessionId} {
+      allow read: if true;
+      allow write: if true;
     }
   }
 }

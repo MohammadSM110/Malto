@@ -26,6 +26,8 @@ import {
   Card,
   HeroCard,
   HeroCardData,
+  HeroCardStack,
+  HeroCardStackItem,
   DonationFeedCard,
   DonationFeedItem,
   FeedHeader,
@@ -38,6 +40,7 @@ import {
   DonationFeedCardSkeleton,
   Tabs,
   toPersianDigits,
+  formatPersianTimeAgo,
   DonationDetailModal,
   DonateModal,
 } from './design-system/index.ts';
@@ -45,14 +48,18 @@ import { APP_CONFIG, CATEGORIES_CONFIG } from './design-system/config/navigation
 import { ExplorePage } from './components/ExplorePage.tsx';
 import { ItemDetailPage } from './components/ItemDetailPage.tsx';
 import { AddItemFlow } from './components/AddItemFlow.tsx';
+import { DonationSuccessPage } from './components/DonationSuccessPage.tsx';
+import { SplashScreen } from './components/SplashScreen.tsx';
 import { EXPLORE_ITEMS, ExploreItem } from './data/exploreData.ts';
 import { AuthProvider, useAuth } from './context/AuthContext.tsx';
 import { AuthModal } from './components/AuthModal.tsx';
 import { RequestsManager } from './components/RequestsManager.tsx';
+import { AdminPanel } from './components/admin/AdminPanel.tsx';
 import {
   subscribeItems,
   subscribeNotifications,
   subscribeDonorRequests,
+  subscribeUserRequests,
   updateItem,
   deleteItem,
   incrementItemViews,
@@ -79,20 +86,12 @@ import {
   Trash2,
 } from 'lucide-react';
 
-function formatPersianTimeAgo(isoString?: string): string {
-  if (!isoString) return 'جدید';
-  const diffMs = Date.now() - new Date(isoString).getTime();
-  const diffMinutes = Math.max(1, Math.floor(diffMs / (1000 * 60)));
-  if (diffMinutes < 60) return `${toPersianDigits(diffMinutes)} دقیقه پیش`;
-  const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return `${toPersianDigits(diffHours)} ساعت پیش`;
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffDays === 1) return 'دیروز';
-  return `${toPersianDigits(diffDays)} روز پیش`;
-}
-
-function MaaltoApp() {
-  const { currentUser, userProfile, setIsAuthModalOpen, signOut } = useAuth();
+function MaaltoApp({
+  onNavigateToAdmin,
+}: {
+  onNavigateToAdmin?: () => void;
+}) {
+  const { currentUser, userProfile, setIsAuthModalOpen, signOut, updateUserProfileData } = useAuth();
   // Application & Studio State
   const [viewMode, setViewMode] = useState<'app' | 'tokens'>('app');
   const [dir, setDir] = useState<'rtl' | 'ltr'>('rtl');
@@ -102,6 +101,7 @@ function MaaltoApp() {
   const [selectedItem, setSelectedItem] = useState<DonationFeedItem | null>(null);
   const [selectedDetailItem, setSelectedDetailItem] = useState<ExploreItem | null>(null);
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
+  const [submittedSuccessItem, setSubmittedSuccessItem] = useState<ExploreItem | null>(null);
   const [isDonateModalOpen, setIsDonateModalOpen] = useState(false);
   const [requestToast, setRequestToast] = useState<string | null>(null);
   const [activeTokensTab, setActiveTokensTab] = useState('colors');
@@ -114,6 +114,7 @@ function MaaltoApp() {
   // Real-time backend notifications and incoming requests
   const [realNotifications, setRealNotifications] = useState<NotificationDoc[]>([]);
   const [realIncomingRequests, setRealIncomingRequests] = useState<ItemRequestDoc[]>([]);
+  const [realOutgoingRequests, setRealOutgoingRequests] = useState<ItemRequestDoc[]>([]);
   const [backendHealth, setBackendHealth] = useState<{
     status: string;
     services?: Record<string, string>;
@@ -150,7 +151,7 @@ function MaaltoApp() {
           location: doc.location || `${doc.city} / ${doc.district}`,
           city: doc.city,
           district: doc.district,
-          timeAgo: (doc as any).timeAgo || formatPersianTimeAgo(doc.createdAt),
+          timeAgo: formatPersianTimeAgo(doc.createdAt || (doc as any).timeAgo),
           createdAt: doc.createdAt || new Date().toISOString(),
           imageUrl: doc.imageUrl,
           images: doc.images || [doc.imageUrl],
@@ -209,15 +210,53 @@ function MaaltoApp() {
       setRealIncomingRequests(reqs);
     });
 
+    const unsubUserReqs = subscribeUserRequests(currentUserId, (reqs) => {
+      setRealOutgoingRequests(reqs);
+    });
+
     return () => {
       unsubNotifs();
       unsubReqs();
+      unsubUserReqs();
     };
   }, [currentUser?.uid, userProfile?.uid]);
 
   const realUnreadNotifsCount = realNotifications.filter((n) => !n.read).length;
   const realPendingRequestsCount = realIncomingRequests.filter((r) => r.status === 'pending').length;
   const realTotalBadgeCount = realUnreadNotifsCount + realPendingRequestsCount;
+
+  // Local storage cache of user-donated item IDs to guarantee instantaneous zero-latency sync
+  const [localDonatedIds, setLocalDonatedIds] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('maalto_my_donated_ids') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  const activeUserUids = [
+    currentUser?.uid,
+    userProfile?.uid,
+  ].filter(Boolean) as string[];
+
+  // User-owned items in the database (synced instantly across Firestore and local donor tracking)
+  const myDonatedItems = firestoreItems.filter((item) => {
+    if (localDonatedIds.includes(item.id)) return true;
+    const itemDonorId = (item as any).donorId;
+    if (!itemDonorId || activeUserUids.length === 0) return false;
+    return activeUserUids.includes(itemDonorId);
+  });
+
+  // Real counts of donated items and received items (synced with actual database state)
+  const realDonatedCount = !currentUser && !userProfile
+    ? 0
+    : Math.max(myDonatedItems.length, typeof userProfile?.donatedCount === 'number' ? userProfile.donatedCount : 0);
+
+  const realReceivedCount = !currentUser && !userProfile
+    ? 0
+    : typeof userProfile?.receivedCount === 'number' && userProfile.receivedCount > 0
+    ? userProfile.receivedCount
+    : realOutgoingRequests.filter((r) => r.status === 'accepted' || r.status === 'completed').length;
 
   // Active user city location context (default Tehran or from user profile)
   const [activeCity, setActiveCity] = useState<string>(() => {
@@ -253,6 +292,33 @@ function MaaltoApp() {
       });
   }, [firestoreItems, activeCity]);
 
+  // Most-viewed items from ALL cities connected to the Explore feed (sorted dynamically by popularity/viewsCount)
+  const mostViewedExploreItems: HeroCardStackItem[] = React.useMemo(() => {
+    const activeItems = firestoreItems.filter((item) => (item as any).status !== 'given');
+    return [...activeItems]
+      .sort((a, b) => {
+        // Internal ranking signal based on views count (descending), requests count as tie-breaker
+        const viewsDiff = (b.viewsCount || 0) - (a.viewsCount || 0);
+        if (viewsDiff !== 0) return viewsDiff;
+        return (b.requestsCount || 0) - (a.requestsCount || 0);
+      })
+      .slice(0, 10)
+      .map((item) => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        condition: item.condition,
+        timeAgo: item.timeAgo || 'امروز',
+        imageUrl: item.imageUrl,
+        city: item.city || item.location,
+        location: item.location,
+        district: item.district,
+        viewsCount: item.viewsCount || 1,
+        requestsCount: item.requestsCount || 0,
+        donorName: item.donorName,
+      }));
+  }, [firestoreItems]);
+
   // Featured Item dynamically derived from the newest item in user's city
   const heroSourceItem = homeCityItems.length > 0 ? homeCityItems[0] : firestoreItems[0];
   const featuredItem: HeroCardData = heroSourceItem ? {
@@ -270,7 +336,7 @@ function MaaltoApp() {
     description: 'کاملاً سالم و کم‌کارکرد، اهدای رایگان به دانش‌آموز یا فرد علاقه‌مند به ورزش.',
     condition: 'سالم',
     timeAgo: 'امروز',
-    imageUrl: './images/items/hero-bike.jpg',
+    imageUrl: '/images/items/hero-bike.jpg',
     donorName: 'محمدرضا کاظمی',
     city: `${activeCity} / مرکز شهر`,
   };
@@ -283,7 +349,7 @@ function MaaltoApp() {
       description: 'چند دست سرهمی و پاپوش کاملاً نو و سالم، جنس نخ پنبه ضد حساسیت.',
       condition: 'سالم',
       timeAgo: 'دیروز',
-      imageUrl: './images/items/baby-clothes-app.jpg',
+      imageUrl: '/images/items/baby-clothes-app.jpg',
       donorName: 'سارا رادمهر',
       location: 'تهران / شهرک غرب',
     },
@@ -293,7 +359,7 @@ function MaaltoApp() {
       description: 'میز کار چوبی سبک با پایه‌های فلزی مقاوم، مناسب اتاق خواب و مطالعه.',
       condition: 'در حد نو',
       timeAgo: 'امروز',
-      imageUrl: './images/items/study-table.jpg',
+      imageUrl: '/images/items/study-table.jpg',
       donorName: 'امیرحسین پارسا',
       location: 'تهران / سعادت‌آباد',
     },
@@ -303,7 +369,7 @@ function MaaltoApp() {
       description: '۱۲ جلد کتاب نفیس ادبیات فارسی و رمان‌های مطرح جهان با صحافی تمیز.',
       condition: 'سالم',
       timeAgo: '۲ روز پیش',
-      imageUrl: './images/items/books-app.jpg',
+      imageUrl: '/images/items/books-app.jpg',
       donorName: 'دکتر بهرامی',
       location: 'تهران / پونک',
     },
@@ -313,7 +379,7 @@ function MaaltoApp() {
       description: 'ساز تمیز همراه با کاور ضدآب، اهدای رایگان به هنرجوی مبتدی موسیقی.',
       condition: 'سالم',
       timeAgo: '۳ روز پیش',
-      imageUrl: './images/items/tennis-racket.jpg',
+      imageUrl: '/images/items/acoustic-guitar.jpg',
       donorName: 'نیما علیزاده',
       location: 'تهران / ستارخان',
     },
@@ -323,7 +389,7 @@ function MaaltoApp() {
       description: 'گیاه آپارتمانی شاداب و تصفیه‌کننده هوا با خاک تقویت‌شده و گلدان سرامیکی.',
       condition: 'کاملاً نو',
       timeAgo: 'دیروز',
-      imageUrl: './images/items/plant-app.jpg',
+      imageUrl: '/images/items/sansevieria-plant.jpg',
       donorName: 'مهشید رضوی',
       location: 'تهران / صادقیه',
     },
@@ -403,16 +469,6 @@ function MaaltoApp() {
     setSelectedDetailItem(item);
   };
 
-  // User-owned items in the database
-  const myDonatedItems = firestoreItems.filter(
-    (item) =>
-      Boolean(
-        (userProfile?.uid || currentUser?.uid) &&
-        (item as any).donorId &&
-        (item as any).donorId === (userProfile?.uid || currentUser?.uid)
-      )
-  );
-
   // Handle donation submission
   const handleAddNewItem = (newItem: {
     title: string;
@@ -420,6 +476,7 @@ function MaaltoApp() {
     condition: string;
     location: string;
     category: string;
+    imageUrl?: string;
   }) => {
     const created: DonationFeedItem = {
       id: `feed-${Date.now()}`,
@@ -428,11 +485,12 @@ function MaaltoApp() {
       condition: newItem.condition,
       timeAgo: 'لحظاتی پیش',
       imageUrl:
-        newItem.category === 'پوشیدنی'
-          ? './images/items/baby-clothes-app.jpg'
+        newItem.imageUrl ||
+        (newItem.category === 'پوشیدنی'
+          ? '/images/items/baby-clothes-app.jpg'
           : newItem.category === 'کتاب'
-          ? './images/items/books-app.jpg'
-          : './images/items/study-table.jpg',
+          ? '/images/items/books-app.jpg'
+          : '/images/items/study-table.jpg'),
       donorName: 'شما (اهداکننده)',
       location: newItem.location,
     };
@@ -469,13 +527,50 @@ function MaaltoApp() {
       {/* ========================================================================= */}
       {viewMode === 'app' && (
         <>
-          {/* ADD ITEM VIEW: MAALTO ADD GIVEAWAY FLOW */}
-          {isAddItemOpen ? (
+          {/* SUCCESS PAGE REDIRECTION: DEDICATED CONFIRMATION VIEW */}
+          {submittedSuccessItem ? (
+            <main className="flex-1 w-full pb-24">
+              <DonationSuccessPage
+                item={submittedSuccessItem}
+                onGoToProfile={() => {
+                  setSubmittedSuccessItem(null);
+                  setIsAddItemOpen(false);
+                  setSelectedDetailItem(null);
+                  setMobileTab('profile');
+                }}
+                onViewItemDetail={(item) => {
+                  setSubmittedSuccessItem(null);
+                  setIsAddItemOpen(false);
+                  setSelectedDetailItem(item);
+                }}
+                onAddAnother={() => {
+                  setSubmittedSuccessItem(null);
+                  setIsAddItemOpen(true);
+                }}
+                onGoToExplore={() => {
+                  setSubmittedSuccessItem(null);
+                  setIsAddItemOpen(false);
+                  setSelectedDetailItem(null);
+                  setMobileTab('explore');
+                }}
+              />
+            </main>
+          ) : isAddItemOpen ? (
             <main className="flex-1 w-full pb-24">
               <AddItemFlow
                 onClose={() => setIsAddItemOpen(false)}
                 onSuccess={(createdItem) => {
-                  setFirestoreItems((prev) => [createdItem, ...prev]);
+                  // Instant redirect to dedicated Success Page
+                  setIsAddItemOpen(false);
+                  setSubmittedSuccessItem(createdItem);
+
+                  // Update firestoreItems immediately so item is available everywhere
+                  setFirestoreItems((prev) => {
+                    const exists = prev.some((it) => it.id === createdItem.id);
+                    return exists ? prev : [createdItem, ...prev];
+                  });
+
+                  // Update donation feed items
                   setDonationItems((prev) => [
                     {
                       id: createdItem.id,
@@ -490,6 +585,24 @@ function MaaltoApp() {
                     ...prev,
                   ]);
                   EXPLORE_ITEMS.unshift(createdItem);
+
+                  // Instant sync with local user donated IDs to guarantee immediate profile visibility
+                  setLocalDonatedIds((prev) => {
+                    if (prev.includes(createdItem.id)) return prev;
+                    const updated = [createdItem.id, ...prev];
+                    try {
+                      localStorage.setItem('maalto_my_donated_ids', JSON.stringify(updated));
+                    } catch {}
+                    return updated;
+                  });
+
+                  // Increment profile donated count in auth context and database
+                  if (userProfile) {
+                    updateUserProfileData({
+                      donatedCount: (userProfile.donatedCount || 0) + 1,
+                    }).catch(console.warn);
+                  }
+
                   setRequestToast(`هدیه «${createdItem.title}» با موفقیت در شبکه مالتو ثبت و منتشر شد!`);
                   setTimeout(() => setRequestToast(null), 5000);
                 }}
@@ -521,6 +634,11 @@ function MaaltoApp() {
                   <FeedHeader
                     greeting={APP_CONFIG.greeting}
                     location={userLocationLabel}
+                    onLocationClick={() => {
+                      setIsAddItemOpen(false);
+                      setSelectedDetailItem(null);
+                      setMobileTab('explore');
+                    }}
                     searchValue={searchQuery}
                     onSearchChange={setSearchQuery}
                     categories={categories}
@@ -547,12 +665,15 @@ function MaaltoApp() {
                     </span>
                   </div>
 
-                  {/* Featured Hero Card from Figma */}
+                  {/* Most-Viewed Explore Items Swipeable Card Stack (All Cities) */}
                   <section>
-                    <HeroCard
-                      data={featuredItem}
-                      onClick={() => {
-                        if (heroSourceItem) {
+                    <HeroCardStack
+                      items={mostViewedExploreItems}
+                      onSelectItem={(stackItem) => {
+                        const targetItem = firestoreItems.find((it) => it.id === stackItem.id);
+                        if (targetItem) {
+                          handleOpenItemDetail(targetItem);
+                        } else if (heroSourceItem) {
                           handleOpenItemDetail(heroSourceItem);
                         }
                       }}
@@ -695,13 +816,13 @@ function MaaltoApp() {
                     <div className="grid grid-cols-2 gap-3 pt-3 border-t border-[#F1F5F9]">
                       <div className="p-3 bg-[#F8FAFC] rounded-2xl border border-[#E2E8F0] text-center">
                         <span className="text-lg font-black text-[#2563EB] font-num block">
-                          {toPersianDigits(userProfile?.donatedCount ?? 3)}
+                          {toPersianDigits(realDonatedCount)}
                         </span>
                         <span className="text-xs text-[#64748B]">کالای اهدا شده</span>
                       </div>
                       <div className="p-3 bg-[#F8FAFC] rounded-2xl border border-[#E2E8F0] text-center">
                         <span className="text-lg font-black text-[#16A34A] font-num block">
-                          {toPersianDigits(userProfile?.receivedCount ?? 2)}
+                          {toPersianDigits(realReceivedCount)}
                         </span>
                         <span className="text-xs text-[#64748B]">هدیه دریافت شده</span>
                       </div>
@@ -751,7 +872,7 @@ function MaaltoApp() {
                       </span>
                     </div>
 
-                    {!currentUser ? (
+                    {!currentUser && !userProfile ? (
                       <div className="p-5 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] text-center flex flex-col items-center gap-3">
                         <p className="text-xs text-[#64748B]">برای مشاهده و مدیریت کالاهایی که اهدا کرده‌اید وارد شوید.</p>
                         <Button variant="outline" size="sm" onClick={() => setIsAuthModalOpen(true)}>
@@ -765,7 +886,11 @@ function MaaltoApp() {
                           variant="primary"
                           size="sm"
                           startIcon={<Plus size={14} />}
-                          onClick={() => setIsAddItemOpen(true)}
+                          onClick={() => {
+                            setSubmittedSuccessItem(null);
+                            setSelectedDetailItem(null);
+                            setIsAddItemOpen(true);
+                          }}
                         >
                           ثبت اولین هدیه برای اهدا
                         </Button>
@@ -781,6 +906,9 @@ function MaaltoApp() {
                               <img
                                 src={item.imageUrl}
                                 alt={item.title}
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = '/images/items/default-item.jpg';
+                                }}
                                 className="w-16 h-16 rounded-xl object-cover border border-[#E2E8F0] shrink-0"
                               />
                               <div className="flex-1 min-w-0">
@@ -857,33 +985,6 @@ function MaaltoApp() {
                       </div>
                     )}
                   </div>
-
-                  {/* DEPLOYMENT & SYSTEM HEALTH STATUS */}
-                  <div className="bg-[#F8FAFC] rounded-2xl p-4 border border-[#E2E8F0] flex flex-col gap-2.5 text-start text-xs text-[#64748B]">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-[#334155] flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        وضعیت اتصال سرور و پایگاه داده (Cloud Run & Firestore)
-                      </span>
-                      <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md font-bold font-num border border-emerald-200">
-                        {backendHealth ? 'سالم و متصل' : 'آماده به کار'}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] pt-1 border-t border-[#E2E8F0]">
-                      <div>
-                        <span className="text-[#94A3B8]">سرور بک‌اند:</span>{' '}
-                        <span className="text-[#0F172A] font-medium font-num">Express (Port 3000)</span>
-                      </div>
-                      <div>
-                        <span className="text-[#94A3B8]">پایگاه داده:</span>{' '}
-                        <span className="text-[#0F172A] font-medium font-num">Firestore Enterprise</span>
-                      </div>
-                      <div>
-                        <span className="text-[#94A3B8]">احراز هویت:</span>{' '}
-                        <span className="text-[#0F172A] font-medium font-num">Firebase Auth</span>
-                      </div>
-                    </div>
-                  </div>
                 </main>
               )}
             </>
@@ -891,8 +992,9 @@ function MaaltoApp() {
 
           {/* Fixed Bottom Navigation matching Figma */}
           <BottomNavigation
-            activeTab={isAddItemOpen ? 'donate' : mobileTab}
+            activeTab={submittedSuccessItem ? 'donate' : isAddItemOpen ? 'donate' : mobileTab}
             onTabChange={(tab) => {
+              setSubmittedSuccessItem(null);
               setSelectedDetailItem(null);
               if (tab === 'donate') {
                 setIsAddItemOpen(true);
@@ -1156,9 +1258,72 @@ function MaaltoApp() {
 }
 
 export default function App() {
+  const [currentPath, setCurrentPath] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const pathname = window.location.pathname;
+      const hash = window.location.hash;
+      const search = window.location.search;
+      if (
+        pathname === '/admin' ||
+        pathname.startsWith('/admin/') ||
+        hash === '#/admin' ||
+        search.includes('route=admin') ||
+        search.includes('view=admin')
+      ) {
+        return '/admin';
+      }
+      return pathname || '/';
+    }
+    return '/';
+  });
+
+  React.useEffect(() => {
+    const handleLocationChange = () => {
+      const pathname = window.location.pathname;
+      const hash = window.location.hash;
+      const search = window.location.search;
+      if (
+        pathname === '/admin' ||
+        pathname.startsWith('/admin/') ||
+        hash === '#/admin' ||
+        search.includes('route=admin') ||
+        search.includes('view=admin')
+      ) {
+        setCurrentPath('/admin');
+      } else {
+        setCurrentPath(pathname || '/');
+      }
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('hashchange', handleLocationChange);
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
+    };
+  }, []);
+
+  const navigateTo = (path: string) => {
+    if (typeof window !== 'undefined') {
+      window.history.pushState({}, '', path);
+      setCurrentPath(path);
+      window.scrollTo(0, 0);
+    }
+  };
+
+  const isAdminRoute = currentPath === '/admin' || currentPath.startsWith('/admin');
+  const [showSplash, setShowSplash] = useState(true);
+
   return (
     <AuthProvider>
-      <MaaltoApp />
+      {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
+      {isAdminRoute ? (
+        <AdminPanel onNavigateHome={() => navigateTo('/')} />
+      ) : (
+        <MaaltoApp
+          onNavigateToAdmin={() => navigateTo('/admin')}
+        />
+      )}
     </AuthProvider>
   );
 }

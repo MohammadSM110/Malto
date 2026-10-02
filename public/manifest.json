@@ -1,0 +1,23 @@
+{
+  "name": "مالتو",
+  "short_name": "مالتو",
+  "description": "سامانه اهدای رایگان و بدون قیمت کالا",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0E3058",
+  "theme_color": "#0E3058",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

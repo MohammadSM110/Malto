@@ -46,6 +46,9 @@ export const HeroCard: React.FC<HeroCardProps> = ({
         src={data.imageUrl}
         alt={data.title}
         loading="eager"
+        onError={(e) => {
+          (e.target as HTMLImageElement).src = '/images/items/default-item.jpg';
+        }}
         className="w-full h-full object-cover object-center group-hover:scale-[1.02] transition-transform duration-500"
       />
 

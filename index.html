@@ -3,18 +3,97 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Maalto | مالتو</title>
-    <meta name="description" content="سیستم دیزاین مالتو — پلتفرم بومی اهدای رایگان کالا و چرخه بخشش وسایل بر اساس طراحی فیگما با پشتیبانی کامل راست‌چین (RTL)" />
-    <meta property="og:title" content="Maalto | مالتو" />
-    <meta property="og:description" content="سیستم دیزاین مالتو — پلتفرم بومی اهدای رایگان کالا و چرخه بخشش وسایل بر اساس طراحی فیگما با پشتیبانی کامل راست‌چین (RTL)" />
+    <meta name="theme-color" content="#0E3058" />
+    <meta name="msapplication-navbutton-color" content="#0E3058" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="#0E3058" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <title>مالتو</title>
+    <meta name="description" content="سیستم جابه جایی رایگان کالا" />
+    <meta property="og:title" content="مالتو" />
+    <meta property="og:description" content="سیستم جابه جایی رایگان کالا" />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Vazirmatn:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Vazirmatn:wght@200;300;400;500;600;700;800;900&display=swap" crossorigin="anonymous">
+    <script>
+      (function () {
+        // 1. Filter benign CORS stylesheet warnings emitted by internal iframe inspectors
+        var origWarn = console.warn;
+        console.warn = function () {
+          if (
+            arguments.length > 0 &&
+            typeof arguments[0] === 'string' &&
+            arguments[0].indexOf('CORS issue reading stylesheet') !== -1
+          ) {
+            return;
+          }
+          return origWarn.apply(console, arguments);
+        };
+
+        // 2. Filter benign WebSocket disconnect logs and unhandled rejections in sandboxed iframes
+        var origError = console.error;
+        console.error = function () {
+          if (arguments.length > 0) {
+            var first = String(arguments[0] || '');
+            if (
+              first.indexOf('WebSocket') !== -1 ||
+              first.indexOf('vite-hmr') !== -1 ||
+              first.indexOf('ws://') !== -1 ||
+              first.indexOf('wss://') !== -1
+            ) {
+              return;
+            }
+          }
+          return origError.apply(console, arguments);
+        };
+
+        window.addEventListener('unhandledrejection', function (event) {
+          var reason = event.reason;
+          var msg = reason && (reason.message || reason) ? String(reason.message || reason) : '';
+          if (
+            msg.indexOf('WebSocket') !== -1 ||
+            msg.indexOf('ws://') !== -1 ||
+            msg.indexOf('wss://') !== -1 ||
+            msg.indexOf('closed without opened') !== -1
+          ) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        });
+
+        window.addEventListener('error', function (event) {
+          var msg = event && event.message ? String(event.message) : '';
+          if (
+            msg.indexOf('WebSocket') !== -1 ||
+            msg.indexOf('CORS issue reading stylesheet') !== -1
+          ) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        });
+      })();
+    </script>
   </head>
-  <body class="bg-[#F8FAFC] text-[#0F172A] antialiased selection:bg-[#2563EB] selection:text-white">
-    <div id="root"></div>
+  <body class="bg-[#0E3058] text-[#0F172A] antialiased selection:bg-[#2563EB] selection:text-white">
+    <div id="root">
+      <div id="initial-splash-screen" style="position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #0E3058; color: #ffffff; font-family: 'Vazirmatn', sans-serif; text-align: center; z-index: 99999;">
+        <div style="margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
+          <div style="width: 140px; height: 140px; border-radius: 22%; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: rgba(255,255,255,0.06);">
+            <img
+              src="/logo.png"
+              alt="لوگوی مالتو"
+              style="width: 100%; height: 100%; object-fit: contain; border-radius: 22%;"
+              onerror="if(!this.dataset.retried){this.dataset.retried='1';this.src='/logo.jpg';}else if(!this.dataset.retried2){this.dataset.retried2='1';this.src='logo.png';}"
+            />
+          </div>
+        </div>
+        <div style="margin-top: 20px; font-size: 26px; font-weight: 900; color: #ffffff; letter-spacing: -0.02em;">مالتو</div>
+        <div style="margin-top: 10px; font-size: 18px; font-weight: 500; color: rgba(255,255,255,0.9); line-height: 1.6;">اینجا یک دیوار مهربانی بزرگه</div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

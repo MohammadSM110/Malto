@@ -21,6 +21,9 @@ export const db: Firestore =
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.addScope('email');
+googleProvider.addScope('profile');
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 // Operation Types as defined in Firebase Skill
 export enum OperationType {

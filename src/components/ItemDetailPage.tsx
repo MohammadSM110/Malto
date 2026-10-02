@@ -3,7 +3,6 @@ import { cn } from '../design-system/utils/cn.ts';
 import { toPersianDigits } from '../design-system/utils/persian.ts';
 import { Button } from '../design-system/components/Button.tsx';
 import { ConditionBadge, CategoryPill, Badge } from '../design-system/components/Badge.tsx';
-import { Skeleton, ErrorState } from '../design-system/components/Feedback.tsx';
 import { ExploreItem, EXPLORE_ITEMS } from '../data/exploreData.ts';
 import { useAuth } from '../context/AuthContext.tsx';
 import { createItemRequest, incrementItemViews } from '../lib/firestoreService.ts';
@@ -73,10 +72,6 @@ export const ItemDetailPage: React.FC<ItemDetailPageProps> = ({
       incrementItemViews(item.id);
     }
   }, [item.id]);
-
-  // Dev state simulation
-  const [simulatedLoading, setSimulatedLoading] = useState(false);
-  const [simulatedError, setSimulatedError] = useState(false);
 
   // Protected claim initiation
   const handleInitiateClaim = () => {
@@ -175,66 +170,6 @@ export const ItemDetailPage: React.FC<ItemDetailPageProps> = ({
     }
   };
 
-  // Loading State View
-  if (simulatedLoading) {
-    return (
-      <div className="w-full max-w-5xl mx-auto px-4 py-6 flex flex-col gap-6 animate-pulse select-none text-start">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Skeleton className="w-10 h-10 rounded-xl" />
-            <Skeleton className="w-48 h-5 rounded-lg" />
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSimulatedLoading(false)}
-              className="text-xs"
-            >
-              خروج از حالت لودینگ
-            </Button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          <div className="lg:col-span-7 flex flex-col gap-4">
-            <Skeleton className="w-full h-80 rounded-3xl" />
-            <div className="flex gap-3">
-              <Skeleton className="w-20 h-20 rounded-2xl" />
-              <Skeleton className="w-20 h-20 rounded-2xl" />
-              <Skeleton className="w-20 h-20 rounded-2xl" />
-            </div>
-          </div>
-          <div className="lg:col-span-5 flex flex-col gap-4">
-            <Skeleton className="w-32 h-6 rounded-full" />
-            <Skeleton className="w-full h-8 rounded-xl" />
-            <Skeleton className="w-3/4 h-5 rounded-lg" />
-            <Skeleton className="w-full h-32 rounded-3xl mt-4" />
-            <Skeleton className="w-full h-12 rounded-2xl mt-4" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Error State View
-  if (simulatedError) {
-    return (
-      <div className="w-full max-w-md mx-auto px-4 py-16">
-        <ErrorState
-          title="خطا در دریافت اطلاعات هدیه"
-          description="ارتباط با سرور برقرار نشد یا این هدیه قبلاً توسط کاربر دیگری دریافت شده است."
-          onRetry={() => setSimulatedError(false)}
-        />
-        <div className="text-center mt-4">
-          <Button variant="outline" size="sm" onClick={onBack}>
-            بازگشت به فهرست
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className={cn('w-full max-w-5xl mx-auto px-4 py-6 flex flex-col gap-6 text-start select-none', className)}>
       {/* Toast Notification */}
@@ -302,26 +237,6 @@ export const ItemDetailPage: React.FC<ItemDetailPageProps> = ({
           >
             <Flag size={15} />
           </button>
-
-          {/* Dev State Simulators */}
-          <div className="hidden lg:flex items-center gap-1 border-s border-[#E2E8F0] ps-2">
-            <button
-              type="button"
-              onClick={() => setSimulatedLoading(true)}
-              className="px-2 py-1 text-[10px] text-[#64748B] hover:text-[#2563EB] bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg"
-              title="مشاهده حالت در حال بارگذاری"
-            >
-              تست لودینگ
-            </button>
-            <button
-              type="button"
-              onClick={() => setSimulatedError(true)}
-              className="px-2 py-1 text-[10px] text-[#64748B] hover:text-rose-600 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg"
-              title="مشاهده حالت خطا"
-            >
-              تست خطا
-            </button>
-          </div>
         </div>
       </div>
 
@@ -336,6 +251,9 @@ export const ItemDetailPage: React.FC<ItemDetailPageProps> = ({
             <img
               src={images[selectedImageIndex]}
               alt={item.title}
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/images/items/default-item.jpg';
+              }}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
 
@@ -390,7 +308,14 @@ export const ItemDetailPage: React.FC<ItemDetailPageProps> = ({
                       : 'border-[#E2E8F0] opacity-70 hover:opacity-100'
                   )}
                 >
-                  <img src={img} alt={`تصویر ${idx + 1}`} className="w-full h-full object-cover" />
+                  <img
+                    src={img}
+                    alt={`تصویر ${idx + 1}`}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/images/items/default-item.jpg';
+                    }}
+                    className="w-full h-full object-cover"
+                  />
                 </button>
               ))}
             </div>
@@ -622,6 +547,9 @@ export const ItemDetailPage: React.FC<ItemDetailPageProps> = ({
                   <img
                     src={related.imageUrl}
                     alt={related.title}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/images/items/default-item.jpg';
+                    }}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute top-2 inset-inline-start-2">
@@ -688,6 +616,9 @@ export const ItemDetailPage: React.FC<ItemDetailPageProps> = ({
                     <img
                       src={item.imageUrl}
                       alt={item.title}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/images/items/default-item.jpg';
+                      }}
                       className="w-14 h-14 rounded-xl object-cover shrink-0"
                     />
                     <div className="flex flex-col text-xs">

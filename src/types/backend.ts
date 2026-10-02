@@ -6,9 +6,41 @@ export interface UserProfile {
   city: string;
   district: string;
   bio?: string;
+  phoneNumber?: string;
+  accountPassword?: string;
+  lastLoginAt?: string;
+  itemsCount?: number;
   donatedCount: number;
   receivedCount: number;
+  isBlocked?: boolean;
+  blockedAt?: string;
+  blockedReason?: string;
   createdAt: string;
+}
+
+export interface DailyVisitPoint {
+  date: string; // YYYY-MM-DD or Jalali string
+  dayLabel: string; // e.g. "شنبه ۲۳"
+  visits: number;
+}
+
+export interface SiteAnalyticsDoc {
+  id: string;
+  totalVisits: number;
+  todayVisits: number;
+  monthVisits: number;
+  lastVisitDate: string;
+  lastVisitMonth: string;
+  dailyVisits: DailyVisitPoint[];
+  updatedAt: string;
+}
+
+export interface OnlineSessionDoc {
+  id: string;
+  lastActive: string;
+  date: string;
+  userId?: string;
+  city?: string;
 }
 
 export type ItemCondition = 'سالم' | 'کاملاً نو' | 'در حد نو' | 'نیازمند تعمیر';

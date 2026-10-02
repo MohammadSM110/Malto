@@ -46,6 +46,9 @@ export const DonationDetailModal: React.FC<DonationDetailModalProps> = ({
         <img
           src={item.imageUrl}
           alt={item.title}
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = '/images/items/default-item.jpg';
+          }}
           className="w-full h-full object-cover"
         />
         <div className="absolute top-5 right-6 z-10">

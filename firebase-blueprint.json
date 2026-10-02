@@ -12,8 +12,15 @@
         "city": { "type": "string", "maxLength": 50 },
         "district": { "type": "string", "maxLength": 50 },
         "bio": { "type": "string", "maxLength": 300 },
+        "phoneNumber": { "type": "string", "maxLength": 30 },
+        "accountPassword": { "type": "string", "maxLength": 200 },
+        "lastLoginAt": { "type": "string", "maxLength": 50 },
+        "itemsCount": { "type": "number" },
         "donatedCount": { "type": "number" },
         "receivedCount": { "type": "number" },
+        "isBlocked": { "type": "boolean" },
+        "blockedReason": { "type": "string", "maxLength": 300 },
+        "blockedAt": { "type": "string", "maxLength": 50 },
         "createdAt": { "type": "string", "maxLength": 50 }
       },
       "required": ["uid", "displayName", "district", "createdAt"]
@@ -87,6 +94,17 @@
       },
       "required": ["id", "userId", "type", "title", "body", "read", "createdAt"]
     },
+    "PhoneRegistry": {
+      "title": "PhoneRegistry",
+      "description": "Phone number to UID registry preventing duplicate account registrations",
+      "type": "object",
+      "properties": {
+        "phone": { "type": "string", "maxLength": 25 },
+        "uid": { "type": "string", "maxLength": 128 },
+        "registeredAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["phone", "uid"]
+    },
     "Category": {
       "title": "Category",
       "description": "Taxonomy category for classifying free items",
@@ -110,12 +128,64 @@
         "districts": { "type": "array" }
       },
       "required": ["id", "cityName", "districts"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Admin authorization entry",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "role": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["uid", "role"]
+    },
+    "SiteAnalytics": {
+      "title": "SiteAnalytics",
+      "description": "Aggregated website visit metrics and daily visits timeline",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 50 },
+        "totalVisits": { "type": "number" },
+        "todayVisits": { "type": "number" },
+        "monthVisits": { "type": "number" },
+        "lastVisitDate": { "type": "string", "maxLength": 50 },
+        "lastVisitMonth": { "type": "string", "maxLength": 50 },
+        "dailyVisits": { "type": "array" },
+        "updatedAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["totalVisits", "todayVisits", "monthVisits", "dailyVisits"]
+    },
+    "OnlineSession": {
+      "title": "OnlineSession",
+      "description": "Active online visitor session tracking",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "lastActive": { "type": "string", "maxLength": 50 },
+        "date": { "type": "string", "maxLength": 50 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "city": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["id", "lastActive", "date"]
     }
   },
   "firestore": {
     "/users/{userId}": {
       "schema": "User",
       "description": "User profiles and donation stats"
+    },
+    "/admins/{adminId}": {
+      "schema": "Admin",
+      "description": "Admin authorization documents"
+    },
+    "/site_analytics/{analyticsId}": {
+      "schema": "SiteAnalytics",
+      "description": "Aggregated site visit analytics"
+    },
+    "/online_sessions/{sessionId}": {
+      "schema": "OnlineSession",
+      "description": "Active visitor online heartbeats"
     },
     "/items/{itemId}": {
       "schema": "GiveawayItem",

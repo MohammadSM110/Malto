@@ -55,3 +55,50 @@ export function getDonationStatusLabel(status: 'available' | 'reserved' | 'donat
       return 'اهدا شد';
   }
 }
+
+/**
+ * Accurately calculates elapsed relative time from a creation timestamp
+ * Starting from the exact moment an item was submitted by the user.
+ * e.g. "همین الان", "۵ دقیقه پیش", "۳ ساعت پیش", "دیروز", "۲ روز پیش", "۱ هفته پیش"
+ */
+export function formatPersianTimeAgo(dateInput?: string | number | Date): string {
+  if (!dateInput) return 'همین الان';
+  const timestamp =
+    typeof dateInput === 'string' && isNaN(Date.parse(dateInput))
+      ? null
+      : new Date(dateInput).getTime();
+
+  if (!timestamp || isNaN(timestamp)) {
+    if (typeof dateInput === 'string') return toPersianDigits(dateInput);
+    return 'همین الان';
+  }
+
+  const diffMs = Date.now() - timestamp;
+  if (diffMs < 0) return 'همین الان';
+
+  const diffSeconds = Math.floor(diffMs / 1000);
+  if (diffSeconds < 60) return 'همین الان';
+
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  if (diffMinutes < 60) return `${toPersianDigits(diffMinutes)} دقیقه پیش`;
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${toPersianDigits(diffHours)} ساعت پیش`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return 'دیروز';
+  if (diffDays < 7) return `${toPersianDigits(diffDays)} روز پیش`;
+
+  const diffWeeks = Math.floor(diffDays / 7);
+  if (diffWeeks === 1) return '۱ هفته پیش';
+  if (diffWeeks < 4) return `${toPersianDigits(diffWeeks)} هفته پیش`;
+
+  const diffMonths = Math.floor(diffDays / 30);
+  if (diffMonths === 1) return '۱ ماه پیش';
+  if (diffMonths < 12) return `${toPersianDigits(diffMonths)} ماه پیش`;
+
+  const diffYears = Math.floor(diffDays / 365);
+  if (diffYears === 1) return '۱ سال پیش';
+  return `${toPersianDigits(diffYears)} سال پیش`;
+}
+

@@ -12,6 +12,7 @@ export * from './components/Textarea.tsx';
 export * from './components/Badge.tsx';
 export * from './components/Card.tsx';
 export * from './components/HeroCard.tsx';
+export * from './components/HeroCardStack.tsx';
 export * from './components/DonationFeedCard.tsx';
 export * from './components/Navigation.tsx';
 export * from './components/BottomNavigation.tsx';

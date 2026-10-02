@@ -2,6 +2,7 @@ import React from 'react';
 import { cn } from '../utils/cn.ts';
 import { ConditionBadge } from './Badge.tsx';
 import { MapPin, Zap } from 'lucide-react';
+import { formatPersianTimeAgo } from '../utils/persian.ts';
 
 export interface BaseItemData {
   id: string;
@@ -9,6 +10,7 @@ export interface BaseItemData {
   description: string;
   condition: string;
   timeAgo: string;
+  createdAt?: string;
   imageUrl: string;
   location?: string;
   donorName?: string;
@@ -39,6 +41,9 @@ export const ItemCard = <T extends BaseItemData = BaseItemData>({
   onClick,
   className,
 }: ItemCardProps<T>) => {
+  // Dynamically calculate accurate time elapsed from submission moment
+  const displayTimeAgo = formatPersianTimeAgo(item.createdAt || item.timeAgo);
+
   // 1. Signature Figma Feed List Card
   if (variant === 'feed') {
     return (
@@ -65,7 +70,7 @@ export const ItemCard = <T extends BaseItemData = BaseItemData>({
           {/* Meta row: Condition badge + Time ago */}
           <div className="flex items-center gap-3">
             <ConditionBadge condition={item.condition} />
-            <span className="text-[11px] text-[#94A3B8]">{item.timeAgo}</span>
+            <span className="text-[11px] text-[#94A3B8]">{displayTimeAgo}</span>
             {item.location && (
               <span className="text-[11px] text-[#94A3B8] hidden sm:inline-block">
                 • {item.location}
@@ -80,6 +85,9 @@ export const ItemCard = <T extends BaseItemData = BaseItemData>({
             src={item.imageUrl}
             alt={item.title}
             loading="lazy"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = '/images/items/default-item.jpg';
+            }}
             className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
           />
           {item.isDonated && (
@@ -133,7 +141,7 @@ export const ItemCard = <T extends BaseItemData = BaseItemData>({
           <div className="flex items-center justify-between pt-1 border-t border-[#F1F5F9]">
             <div className="flex items-center gap-2">
               <ConditionBadge condition={item.condition} />
-              <span className="text-[11px] text-[#94A3B8]">{item.timeAgo}</span>
+              <span className="text-[11px] text-[#94A3B8]">{displayTimeAgo}</span>
             </div>
             {item.location && (
               <span className="text-[11px] text-[#64748B] flex items-center gap-1">
@@ -149,6 +157,9 @@ export const ItemCard = <T extends BaseItemData = BaseItemData>({
             src={item.imageUrl}
             alt={item.title}
             loading="lazy"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = '/images/items/default-item.jpg';
+            }}
             className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
           />
         </div>
@@ -172,6 +183,9 @@ export const ItemCard = <T extends BaseItemData = BaseItemData>({
           src={item.imageUrl}
           alt={item.title}
           loading="lazy"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = '/images/items/default-item.jpg';
+          }}
           className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
         />
 
@@ -207,7 +221,7 @@ export const ItemCard = <T extends BaseItemData = BaseItemData>({
               {item.location || 'تهران'}
             </span>
             <span className="text-[10px] text-[#94A3B8] whitespace-nowrap">
-              {item.timeAgo}
+              {displayTimeAgo}
             </span>
           </div>
         </div>
