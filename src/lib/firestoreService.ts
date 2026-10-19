@@ -171,8 +171,11 @@ export function subscribeItems(
     },
     (error) => {
       console.warn('Realtime items subscription error:', error);
-      onError?.(error);
-      handleFirestoreError(error, OperationType.LIST, path);
+      if (onError) {
+        onError(error instanceof Error ? error : new Error(String(error)));
+      } else {
+        handleFirestoreError(error, OperationType.LIST, path);
+      }
     }
   );
 

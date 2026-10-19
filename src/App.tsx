@@ -50,6 +50,7 @@ import { ItemDetailPage } from './components/ItemDetailPage.tsx';
 import { AddItemFlow } from './components/AddItemFlow.tsx';
 import { DonationSuccessPage } from './components/DonationSuccessPage.tsx';
 import { SplashScreen } from './components/SplashScreen.tsx';
+import { LandingPage } from './components/LandingPage.tsx';
 import { EXPLORE_ITEMS, ExploreItem } from './data/exploreData.ts';
 import { AuthProvider, useAuth } from './context/AuthContext.tsx';
 import { AuthModal } from './components/AuthModal.tsx';
@@ -88,8 +89,16 @@ import {
 
 function MaaltoApp({
   onNavigateToAdmin,
+  onNavigateToLanding,
+  initialTab = 'home',
+  initialAction,
+  initialItemId,
 }: {
   onNavigateToAdmin?: () => void;
+  onNavigateToLanding?: () => void;
+  initialTab?: BottomNavTab;
+  initialAction?: 'donate' | null;
+  initialItemId?: string | null;
 }) {
   const { currentUser, userProfile, setIsAuthModalOpen, signOut, updateUserProfileData } = useAuth();
   // Application & Studio State
@@ -97,10 +106,10 @@ function MaaltoApp({
   const [dir, setDir] = useState<'rtl' | 'ltr'>('rtl');
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [mobileTab, setMobileTab] = useState<BottomNavTab>('home');
+  const [mobileTab, setMobileTab] = useState<BottomNavTab>(initialTab || 'home');
   const [selectedItem, setSelectedItem] = useState<DonationFeedItem | null>(null);
   const [selectedDetailItem, setSelectedDetailItem] = useState<ExploreItem | null>(null);
-  const [isAddItemOpen, setIsAddItemOpen] = useState(false);
+  const [isAddItemOpen, setIsAddItemOpen] = useState(initialAction === 'donate');
   const [submittedSuccessItem, setSubmittedSuccessItem] = useState<ExploreItem | null>(null);
   const [isDonateModalOpen, setIsDonateModalOpen] = useState(false);
   const [requestToast, setRequestToast] = useState<string | null>(null);
@@ -110,6 +119,26 @@ function MaaltoApp({
   const [firestoreItems, setFirestoreItems] = useState<ExploreItem[]>(EXPLORE_ITEMS);
   const [isLoadingItems, setIsLoadingItems] = useState<boolean>(true);
   const [itemsError, setItemsError] = useState<string | null>(null);
+
+  // Sync initial tab or action if changed
+  React.useEffect(() => {
+    if (initialTab) {
+      setMobileTab(initialTab);
+    }
+    if (initialAction === 'donate') {
+      setIsAddItemOpen(true);
+    }
+  }, [initialTab, initialAction]);
+
+  // Open initial item if requested
+  React.useEffect(() => {
+    if (initialItemId && firestoreItems.length > 0) {
+      const found = firestoreItems.find((it) => it.id === initialItemId);
+      if (found) {
+        setSelectedDetailItem(found);
+      }
+    }
+  }, [initialItemId, firestoreItems]);
 
   // Real-time backend notifications and incoming requests
   const [realNotifications, setRealNotifications] = useState<NotificationDoc[]>([]);
@@ -137,58 +166,65 @@ function MaaltoApp({
     // Seed initial dataset if database is empty on first boot
     seedInitialDataIfEmpty(currentUser?.uid);
 
-    const unsubscribe = subscribeItems((items) => {
-      setIsLoadingItems(false);
-      setItemsError(null);
-      if (items && items.length > 0) {
-        const mapped: ExploreItem[] = items.map((doc) => ({
-          id: doc.id,
-          title: doc.title,
-          description: doc.description,
-          category: doc.category,
-          categoryLabel: doc.categoryLabel,
-          condition: doc.condition,
-          location: doc.location || `${doc.city} / ${doc.district}`,
-          city: doc.city,
-          district: doc.district,
-          timeAgo: formatPersianTimeAgo(doc.createdAt || (doc as any).timeAgo),
-          createdAt: doc.createdAt || new Date().toISOString(),
-          imageUrl: doc.imageUrl,
-          images: doc.images || [doc.imageUrl],
-          donorId: doc.donorId,
-          donorName: doc.donorName,
-          donorBadge: doc.donorBadge || 'اهداکننده تاییدشده',
-          donorJoined: doc.donorJoined || '۱۴۰۳',
-          donorDonatedCount: doc.donorDonatedCount || 3,
-          donorResponseTime: doc.donorResponseTime || 'زیر ۳۰ دقیقه',
-          donorRating: doc.donorRating || '۵.۰',
-          pickupAddress: doc.pickupAddress,
-          deliveryMethod: doc.deliveryMethod,
-          deliveryLabel: doc.deliveryLabel,
-          urgentPickup: doc.urgentPickup,
-          viewsCount: doc.viewsCount || 1,
-          requestsCount: doc.requestsCount || 0,
-          specs: doc.specs,
-          status: doc.status,
-        }));
-        setFirestoreItems(mapped);
+    const unsubscribe = subscribeItems(
+      (items) => {
+        setIsLoadingItems(false);
+        setItemsError(null);
+        if (items && items.length > 0) {
+          const mapped: ExploreItem[] = items.map((doc) => ({
+            id: doc.id,
+            title: doc.title,
+            description: doc.description,
+            category: doc.category,
+            categoryLabel: doc.categoryLabel,
+            condition: doc.condition,
+            location: doc.location || `${doc.city} / ${doc.district}`,
+            city: doc.city,
+            district: doc.district,
+            timeAgo: formatPersianTimeAgo(doc.createdAt || (doc as any).timeAgo),
+            createdAt: doc.createdAt || new Date().toISOString(),
+            imageUrl: doc.imageUrl,
+            images: doc.images || [doc.imageUrl],
+            donorId: doc.donorId,
+            donorName: doc.donorName,
+            donorBadge: doc.donorBadge || 'اهداکننده تاییدشده',
+            donorJoined: doc.donorJoined || '۱۴۰۳',
+            donorDonatedCount: doc.donorDonatedCount || 3,
+            donorResponseTime: doc.donorResponseTime || 'زیر ۳۰ دقیقه',
+            donorRating: doc.donorRating || '۵.۰',
+            pickupAddress: doc.pickupAddress,
+            deliveryMethod: doc.deliveryMethod,
+            deliveryLabel: doc.deliveryLabel,
+            urgentPickup: doc.urgentPickup,
+            viewsCount: doc.viewsCount || 1,
+            requestsCount: doc.requestsCount || 0,
+            specs: doc.specs,
+            status: doc.status,
+          }));
+          setFirestoreItems(mapped);
 
-        // Also sync to donationItems
-        const feedMapped: DonationFeedItem[] = mapped.map((i) => ({
-          id: i.id,
-          title: i.title,
-          description: i.description,
-          condition: i.condition,
-          timeAgo: i.timeAgo,
-          imageUrl: i.imageUrl,
-          donorName: i.donorName,
-          location: i.location,
-        }));
-        setDonationItems(feedMapped);
-      } else {
+          // Also sync to donationItems
+          const feedMapped: DonationFeedItem[] = mapped.map((i) => ({
+            id: i.id,
+            title: i.title,
+            description: i.description,
+            condition: i.condition,
+            timeAgo: i.timeAgo,
+            imageUrl: i.imageUrl,
+            donorName: i.donorName,
+            location: i.location,
+          }));
+          setDonationItems(feedMapped);
+        } else {
+          setFirestoreItems(EXPLORE_ITEMS);
+        }
+      },
+      (error) => {
+        console.warn('Realtime items subscription error, resiliently keeping seed items:', error);
+        setIsLoadingItems(false);
         setFirestoreItems(EXPLORE_ITEMS);
       }
-    });
+    );
 
     return () => unsubscribe();
   }, [currentUser?.uid]);
@@ -660,9 +696,21 @@ function MaaltoApp({
                       <span className="w-2 h-2 rounded-full bg-[#2563EB]" />
                       <span className="font-semibold text-[#0F172A]">{APP_CONFIG.goldenRuleNotice}</span>
                     </div>
-                    <span className="text-[11px] text-[#2563EB] bg-[#EFF6FF] px-2 py-0.5 rounded-full font-medium">
-                      {APP_CONFIG.goldenRuleSub}
-                    </span>
+                    {onNavigateToLanding ? (
+                      <button
+                        type="button"
+                        onClick={onNavigateToLanding}
+                        className="text-[11px] text-[#2563EB] hover:text-[#1D4ED8] bg-[#EFF6FF] hover:bg-[#DBEAFE] px-2.5 py-0.5 rounded-full font-medium transition-colors cursor-pointer flex items-center gap-1"
+                        title="مشاهده صفحه معرفی مالتو"
+                      >
+                        <span>معرفی مالتو</span>
+                        <span aria-hidden="true">←</span>
+                      </button>
+                    ) : (
+                      <span className="text-[11px] text-[#2563EB] bg-[#EFF6FF] px-2 py-0.5 rounded-full font-medium">
+                        {APP_CONFIG.goldenRuleSub}
+                      </span>
+                    )}
                   </div>
 
                   {/* Most-Viewed Explore Items Swipeable Card Stack (All Cities) */}
@@ -847,6 +895,15 @@ function MaaltoApp({
                       >
                         مدیریت حساب و احراز هویت (Firebase Auth)
                       </Button>
+                      {onNavigateToLanding && (
+                        <button
+                          type="button"
+                          onClick={onNavigateToLanding}
+                          className="text-xs text-[#2563EB] hover:underline py-1.5 font-medium flex items-center justify-center gap-1 cursor-pointer"
+                        >
+                          <span>مشاهده صفحه معرفی مالتو (صفحه اصلی)</span>
+                        </button>
+                      )}
                       {currentUser && (
                         <button
                           type="button"
@@ -1257,41 +1314,145 @@ function MaaltoApp({
   );
 }
 
-export default function App() {
-  const [currentPath, setCurrentPath] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      const pathname = window.location.pathname;
-      const hash = window.location.hash;
-      const search = window.location.search;
-      if (
-        pathname === '/admin' ||
-        pathname.startsWith('/admin/') ||
-        hash === '#/admin' ||
-        search.includes('route=admin') ||
-        search.includes('view=admin')
-      ) {
-        return '/admin';
-      }
-      return pathname || '/';
+/**
+ * Helper to determine if current browser URL corresponds to the landing page
+ * Robust against subdirectories, trailing slashes, case-sensitivity, hash routing, and query parameters.
+ */
+export function checkIsLandingRoute(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const pathname = (window.location.pathname || '').toLowerCase();
+    const hash = (window.location.hash || '').toLowerCase();
+    const search = (window.location.search || '').toLowerCase();
+
+    // 1. Normalized pathname checking (/landing, /landing/, /sub/landing, /landing.html)
+    const cleanPath = pathname.replace(/\/+$/, '');
+    const segments = cleanPath.split('/').filter(Boolean);
+
+    if (
+      segments.includes('landing') ||
+      cleanPath === '/landing' ||
+      cleanPath.endsWith('/landing') ||
+      cleanPath.includes('/landing/') ||
+      pathname.includes('landing')
+    ) {
+      return true;
     }
-    return '/';
+
+    // 2. Hash routing check (#/landing, #landing)
+    if (hash.includes('landing')) {
+      return true;
+    }
+
+    // 3. Search query check (?landing, ?view=landing, ?route=landing, ?page=landing)
+    if (
+      search.includes('landing') ||
+      search.includes('view=landing') ||
+      search.includes('route=landing') ||
+      search.includes('page=landing')
+    ) {
+      return true;
+    }
+  } catch (err) {
+    console.error('Error detecting landing route:', err);
+  }
+  return false;
+}
+
+/**
+ * Helper to determine if current browser URL corresponds to the admin panel
+ */
+export function checkIsAdminRoute(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const pathname = (window.location.pathname || '').toLowerCase();
+    const hash = (window.location.hash || '').toLowerCase();
+    const search = (window.location.search || '').toLowerCase();
+
+    const cleanPath = pathname.replace(/\/+$/, '');
+    const segments = cleanPath.split('/').filter(Boolean);
+
+    if (
+      segments.includes('admin') ||
+      cleanPath === '/admin' ||
+      cleanPath.endsWith('/admin') ||
+      cleanPath.includes('/admin/') ||
+      pathname.includes('admin')
+    ) {
+      return true;
+    }
+
+    if (hash.includes('admin')) {
+      return true;
+    }
+
+    if (
+      search.includes('route=admin') ||
+      search.includes('view=admin') ||
+      search.includes('admin')
+    ) {
+      return true;
+    }
+  } catch (err) {
+    console.error('Error detecting admin route:', err);
+  }
+  return false;
+}
+
+export default function App() {
+  const [currentPath, setCurrentPath] = useState<'admin' | 'landing' | 'app'>(() => {
+    if (checkIsAdminRoute()) return 'admin';
+    if (checkIsLandingRoute()) return 'landing';
+    return 'app';
+  });
+
+  const [appRouteOptions, setAppRouteOptions] = useState<{
+    tab?: BottomNavTab;
+    action?: 'donate';
+    itemId?: string;
+  }>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const search = new URLSearchParams(window.location.search);
+        const action = search.get('action') as 'donate' | null;
+        const tab = search.get('tab') as BottomNavTab | null;
+        const itemId = search.get('item') || search.get('itemId') || undefined;
+        return {
+          tab: tab || undefined,
+          action: action === 'donate' ? 'donate' : undefined,
+          itemId,
+        };
+      } catch {}
+    }
+    return {};
+  });
+
+  const [showSplash, setShowSplash] = useState(() => {
+    if (checkIsLandingRoute() || checkIsAdminRoute()) {
+      return false;
+    }
+    return true;
   });
 
   React.useEffect(() => {
     const handleLocationChange = () => {
-      const pathname = window.location.pathname;
-      const hash = window.location.hash;
-      const search = window.location.search;
-      if (
-        pathname === '/admin' ||
-        pathname.startsWith('/admin/') ||
-        hash === '#/admin' ||
-        search.includes('route=admin') ||
-        search.includes('view=admin')
-      ) {
-        setCurrentPath('/admin');
+      if (checkIsAdminRoute()) {
+        setCurrentPath('admin');
+      } else if (checkIsLandingRoute()) {
+        setCurrentPath('landing');
       } else {
-        setCurrentPath(pathname || '/');
+        try {
+          const searchParams = new URLSearchParams(window.location.search);
+          const action = searchParams.get('action') as 'donate' | null;
+          const tab = searchParams.get('tab') as BottomNavTab | null;
+          const itemId = searchParams.get('item') || searchParams.get('itemId') || undefined;
+          setAppRouteOptions({
+            tab: tab || undefined,
+            action: action === 'donate' ? 'donate' : undefined,
+            itemId,
+          });
+        } catch {}
+        setCurrentPath('app');
       }
     };
 
@@ -1303,25 +1464,74 @@ export default function App() {
     };
   }, []);
 
-  const navigateTo = (path: string) => {
+  const navigateTo = (
+    path: string,
+    options?: {
+      tab?: BottomNavTab;
+      action?: 'donate';
+      itemId?: string;
+    }
+  ) => {
     if (typeof window !== 'undefined') {
-      window.history.pushState({}, '', path);
-      setCurrentPath(path);
+      let fullPath = path;
+      if (options?.action) {
+        fullPath += (fullPath.includes('?') ? '&' : '?') + `action=${options.action}`;
+      }
+      if (options?.tab) {
+        fullPath += (fullPath.includes('?') ? '&' : '?') + `tab=${options.tab}`;
+      }
+      if (options?.itemId) {
+        fullPath += (fullPath.includes('?') ? '&' : '?') + `item=${options.itemId}`;
+      }
+      try {
+        window.history.pushState({}, '', fullPath);
+      } catch {
+        if (path.includes('landing')) {
+          window.location.hash = '#/landing';
+        } else if (path.includes('admin')) {
+          window.location.hash = '#/admin';
+        } else {
+          window.location.hash = '';
+        }
+      }
+      if (options) {
+        setAppRouteOptions(options);
+      }
+      if (path.includes('admin')) {
+        setCurrentPath('admin');
+      } else if (path.includes('landing')) {
+        setCurrentPath('landing');
+      } else {
+        setCurrentPath('app');
+      }
       window.scrollTo(0, 0);
     }
   };
 
-  const isAdminRoute = currentPath === '/admin' || currentPath.startsWith('/admin');
-  const [showSplash, setShowSplash] = useState(true);
+  const isAdminRoute = currentPath === 'admin';
+  const isLandingRoute = currentPath === 'landing';
 
   return (
     <AuthProvider>
-      {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
+      {showSplash && currentPath === 'app' && (
+        <SplashScreen onFinish={() => setShowSplash(false)} />
+      )}
       {isAdminRoute ? (
         <AdminPanel onNavigateHome={() => navigateTo('/')} />
+      ) : isLandingRoute ? (
+        <LandingPage
+          onEnterApp={(opts) => {
+            navigateTo('/', opts);
+          }}
+          onNavigateToAdmin={() => navigateTo('/admin')}
+        />
       ) : (
         <MaaltoApp
           onNavigateToAdmin={() => navigateTo('/admin')}
+          onNavigateToLanding={() => navigateTo('/landing')}
+          initialTab={appRouteOptions.tab}
+          initialAction={appRouteOptions.action}
+          initialItemId={appRouteOptions.itemId}
         />
       )}
     </AuthProvider>

@@ -1,0 +1,190 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080" fill="none">
+  <defs>
+    <!-- Sky & Room Ambient Gradients -->
+    <linearGradient id="bg_grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#07192F" />
+      <stop offset="40%" stop-color="#0E2F54" />
+      <stop offset="75%" stop-color="#143D6D" />
+      <stop offset="100%" stop-color="#091B33" />
+    </linearGradient>
+
+    <!-- Warm Sunlight Flare -->
+    <radialGradient id="sunlight_beam" cx="72%" cy="32%" r="65%">
+      <stop offset="0%" stop-color="#FDE68A" stop-opacity="0.85" />
+      <stop offset="25%" stop-color="#F59E0B" stop-opacity="0.45" />
+      <stop offset="55%" stop-color="#D97706" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#0E3058" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Window Light Cone -->
+    <linearGradient id="window_beam" x1="100%" y1="0%" x2="40%" y2="100%">
+      <stop offset="0%" stop-color="#FEF3C7" stop-opacity="0.45" />
+      <stop offset="60%" stop-color="#FCD34D" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#0E3058" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Floor Wood Texture Gradient -->
+    <linearGradient id="floor_wood" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1A283B" />
+      <stop offset="30%" stop-color="#283547" />
+      <stop offset="100%" stop-color="#0A1422" />
+    </linearGradient>
+
+    <!-- Warm Human Skin & Organic Gradients -->
+    <linearGradient id="warm_skin" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FED7AA" />
+      <stop offset="100%" stop-color="#EA580C" />
+    </linearGradient>
+
+    <!-- Book & Cherished Object Gradient -->
+    <linearGradient id="cherished_book" x1="0%" y1="0%" x2="100%" y2="80%">
+      <stop offset="0%" stop-color="#FBBF24" />
+      <stop offset="50%" stop-color="#D97706" />
+      <stop offset="100%" stop-color="#92400E" />
+    </linearGradient>
+
+    <!-- Plant Leaves Gradient -->
+    <linearGradient id="leaf_grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="100%" stop-color="#064E3B" />
+    </linearGradient>
+
+    <!-- Soft Blur Filter for Bokeh & Glow -->
+    <filter id="soft_glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="60" result="blur" />
+    </filter>
+    <filter id="subtle_blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="15" result="blur" />
+    </filter>
+  </defs>
+
+  <!-- Deep Architectural Room Background -->
+  <rect width="1920" height="1080" fill="url(#bg_grad)" />
+
+  <!-- Architectural Window on Right Side -->
+  <g opacity="0.6">
+    <!-- Window Arched Opening -->
+    <path d="M1280 120 C1400 60, 1680 60, 1800 120 L1800 780 L1280 780 Z" fill="#0C2647" />
+    <!-- City Sky through Window with Warm Sunset Gradient -->
+    <rect x="1300" y="100" width="480" height="660" rx="20" fill="#1E3A8A" opacity="0.5" />
+    <circle cx="1540" cy="380" r="280" fill="url(#sunlight_beam)" />
+    <!-- Architectural Window Panes -->
+    <line x1="1540" y1="100" x2="1540" y2="760" stroke="#0E3058" stroke-width="8" opacity="0.8" />
+    <line x1="1300" y1="420" x2="1780" y2="420" stroke="#0E3058" stroke-width="8" opacity="0.8" />
+  </g>
+
+  <!-- Volumetric Warm Sunlight Streaming In -->
+  <polygon points="1320,100 1820,200 1480,1080 780,1080" fill="url(#window_beam)" />
+
+  <!-- Ambient Light Orbs (Cinematic bokeh) -->
+  <circle cx="1480" cy="360" r="180" fill="#FBBF24" opacity="0.25" filter="url(#soft_glow)" />
+  <circle cx="1120" cy="460" r="240" fill="#3B82F6" opacity="0.15" filter="url(#soft_glow)" />
+  <circle cx="820" cy="520" r="160" fill="#F59E0B" opacity="0.2" filter="url(#soft_glow)" />
+
+  <!-- Interior Floor Horizon -->
+  <path d="M0 760 L1920 740 L1920 1080 L0 1080 Z" fill="url(#floor_wood)" />
+  <line x1="0" y1="760" x2="1920" y2="740" stroke="#334155" stroke-width="2" opacity="0.3" />
+
+  <!-- Warm Wooden Furniture & Room Accents -->
+  <!-- Left/Center Ambient Table with Cherished Items -->
+  <g transform="translate(1020, 680)">
+    <!-- Wooden Table Surface -->
+    <polygon points="0,60 260,20 440,50 160,95" fill="#3B2E24" opacity="0.9" />
+    <polygon points="0,60 160,95 160,115 0,80" fill="#241C15" />
+    <polygon points="160,95 440,50 440,70 160,115" fill="#1C1610" />
+    <!-- Table Legs -->
+    <rect x="25" y="80" width="14" height="220" fill="#1E293B" opacity="0.8" />
+    <rect x="150" y="115" width="14" height="190" fill="#1E293B" opacity="0.8" />
+    <rect x="420" y="70" width="14" height="230" fill="#0F172A" opacity="0.7" />
+
+    <!-- Stack of Passed Books on the Table -->
+    <path d="M80 40 L180 20 L240 35 L140 55 Z" fill="#991B1B" />
+    <path d="M80 40 L140 55 L140 68 L80 53 Z" fill="#7F1D1D" />
+    <path d="M85 28 L175 10 L235 25 L145 43 Z" fill="#D97706" />
+    <path d="M85 28 L145 43 L145 40 L85 25 Z" fill="#B45309" />
+    <path d="M90 15 L180 -2 L230 12 L140 29 Z" fill="#2563EB" />
+    <path d="M90 15 L140 29 L140 26 L90 12 Z" fill="#1D4ED8" />
+
+    <!-- Vintage Retro Lamp on Table Casting Warm Light -->
+    <path d="M280 40 C280 20, 310 10, 330 -40 L350 -35 C335 15, 300 25, 300 45 Z" fill="#E2E8F0" opacity="0.8" />
+    <circle cx="350" cy="-45" r="22" fill="#FDE68A" filter="url(#subtle_blur)" />
+    <circle cx="350" cy="-45" r="45" fill="#FEF3C7" opacity="0.5" filter="url(#soft_glow)" />
+  </g>
+
+  <!-- Potted Fiddle Leaf Plant in Corner -->
+  <g transform="translate(1640, 620)">
+    <!-- Terracotta Pot -->
+    <polygon points="20,120 100,120 85,220 35,220" fill="#7C2D12" />
+    <!-- Lush Leaves -->
+    <ellipse cx="60" cy="80" rx="45" ry="70" transform="rotate(-25 60 80)" fill="url(#leaf_grad)" />
+    <ellipse cx="90" cy="50" rx="40" ry="75" transform="rotate(30 90 50)" fill="url(#leaf_grad)" />
+    <ellipse cx="30" cy="30" rx="35" ry="65" transform="rotate(-40 30 30)" fill="url(#leaf_grad)" />
+    <ellipse cx="70" cy="-10" rx="45" ry="80" transform="rotate(10 70 -10)" fill="url(#leaf_grad)" opacity="0.9" />
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- MAIN SCENE: TWO NEIGHBORS SHARING & PASSING A CHERISHED ITEM (THE EMOTION) -->
+  <!-- ========================================================================= -->
+  <!-- Person 1 (The Giver - Right figure warmly passing the item) -->
+  <g id="person_giver" transform="translate(1320, 380)">
+    <!-- Body Silhouette & Modern Casual Clothes -->
+    <!-- Head & Hair -->
+    <circle cx="90" cy="90" r="42" fill="#1E293B" />
+    <ellipse cx="90" cy="95" rx="36" ry="40" fill="#E2E8F0" opacity="0.9" />
+    <path d="M55 75 C60 45, 125 45, 130 75 C115 65, 80 65, 55 75 Z" fill="#0F172A" />
+    <!-- Shoulder & Jacket -->
+    <path d="M40 160 C50 135, 130 135, 140 160 L160 380 L20 380 Z" fill="#1E3A8A" />
+    <!-- Collar & Scarf / Knit -->
+    <path d="M70 145 L90 175 L110 145 Z" fill="#F8FAFC" opacity="0.8" />
+    <!-- Arm extending forward carrying book with care -->
+    <path d="M50 190 C-20 230, -90 260, -140 280 L-130 320 C-80 300, -10 270, 40 220 Z" fill="#1D4ED8" />
+    <!-- Gentle Caring Hand holding book -->
+    <ellipse cx="-150" cy="295" rx="20" ry="14" transform="rotate(-15 -150 295)" fill="url(#warm_skin)" />
+    <ellipse cx="-145" cy="310" rx="16" ry="10" transform="rotate(10 -145 310)" fill="url(#warm_skin)" />
+  </g>
+
+  <!-- Person 2 (The Receiver - Neighbor joyfully receiving with both hands) -->
+  <g id="person_receiver" transform="translate(980, 410)">
+    <!-- Head & Profile -->
+    <circle cx="80" cy="70" r="40" fill="#0F172A" />
+    <ellipse cx="82" cy="75" rx="34" ry="38" fill="#F1F5F9" opacity="0.9" />
+    <path d="M50 60 C60 30, 115 30, 120 60 C110 50, 70 50, 50 60 Z" fill="#334155" />
+    <!-- Torso & Warm Wool Sweater -->
+    <path d="M35 140 C45 115, 125 115, 135 140 L150 360 L15 360 Z" fill="#334155" />
+    <!-- Arm reaching out with grateful, open posture -->
+    <path d="M125 170 C160 210, 205 245, 255 260 L245 295 C195 280, 150 240, 115 200 Z" fill="#475569" />
+    <!-- Receiving Hand under the gift -->
+    <ellipse cx="265" cy="275" rx="22" ry="14" transform="rotate(15 265 275)" fill="url(#warm_skin)" />
+    <ellipse cx="275" cy="290" rx="18" ry="11" transform="rotate(-5 275 290)" fill="url(#warm_skin)" />
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- THE CHERISHED ITEM BEING PASSED (GOLDEN GLOW OF GENUINE VALUE & CARE) -->
+  <!-- ========================================================================= -->
+  <g id="passed_treasure" transform="translate(1140, 640)">
+    <!-- Golden Aura around the handover -->
+    <circle cx="50" cy="20" r="120" fill="#FDE68A" opacity="0.35" filter="url(#soft_glow)" />
+    <circle cx="50" cy="20" r="60" fill="#FFFFFF" opacity="0.25" filter="url(#subtle_blur)" />
+
+    <!-- A Beloved Vintage Leather Hardcover Book / Keepsake Box -->
+    <g transform="rotate(-8 50 20)">
+      <!-- Book Cover -->
+      <polygon points="0,0 95,-18 135,35 40,53" fill="url(#cherished_book)" />
+      <!-- Book Pages Texture (Cream White) -->
+      <polygon points="40,53 135,35 135,47 40,65" fill="#FEF3C7" />
+      <line x1="43" y1="57" x2="132" y2="39" stroke="#E2E8F0" stroke-width="2" opacity="0.5" />
+      <!-- Bottom Cover -->
+      <polygon points="38,65 133,47 135,51 40,69" fill="#78350F" />
+      <!-- Golden Embossed Ribbon / Spine Detail -->
+      <line x1="8" y1="5" x2="44" y2="55" stroke="#FDE68A" stroke-width="3" opacity="0.8" />
+    </g>
+  </g>
+
+  <!-- Gentle ambient floating particles in the golden ray -->
+  <circle cx="1280" cy="420" r="3" fill="#FFFBEB" opacity="0.8" />
+  <circle cx="1340" cy="480" r="2.5" fill="#FDE68A" opacity="0.7" />
+  <circle cx="1220" cy="560" r="4" fill="#FDE68A" opacity="0.6" />
+  <circle cx="1160" cy="490" r="2.5" fill="#FFFBEB" opacity="0.8" />
+  <circle cx="1410" cy="380" r="3.5" fill="#FCD34D" opacity="0.7" />
+  <circle cx="1510" cy="510" r="3" fill="#FFFBEB" opacity="0.6" />
+</svg>

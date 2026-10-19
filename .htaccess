@@ -10,6 +10,9 @@
   AddCharset UTF-8 .html .css .js .json
 </IfModule>
 
+# Disable directory listing and avoid MultiViews conflicts with routes
+Options -Indexes -MultiViews
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
@@ -21,12 +24,16 @@
 
   DirectoryIndex index.html
 
-  # SPA routing: Send all non-file and non-directory requests to index.html
+  # Explicit SPA Route Rewrites with query-string preservation
+  RewriteRule ^landing/?$ index.html [L,QSA]
+  RewriteRule ^admin/?$ index.html [L,QSA]
+
+  # SPA fallback routing: Send all non-file and non-directory requests to index.html
   RewriteRule ^index\.html$ - [L]
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteCond %{REQUEST_FILENAME} !-l
-  RewriteRule . /index.html [L]
+  RewriteRule ^(.*)$ index.html [L,QSA]
 </IfModule>
 
 # Caching optimization

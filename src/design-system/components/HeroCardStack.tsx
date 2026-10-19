@@ -202,8 +202,16 @@ export const HeroCardStack: React.FC<HeroCardStackProps> = ({
   if (!items || items.length === 0) {
     // Skeleton placeholder with layered cards behind
     return (
-      <div className={cn('relative w-full', className)}>
-        <div className="relative w-full aspect-[16/10] sm:aspect-[16/9] rounded-[24px] bg-slate-200 animate-pulse border border-[#E2E8F0]" />
+      <div className={cn('relative w-full select-none text-start', className)}>
+        <div className="flex items-center justify-between mb-2.5 px-1 w-full min-h-[28px]">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#2563EB]" />
+            </span>
+            <h2 className="text-xs sm:text-sm font-bold text-[#0F172A]">{title}</h2>
+          </div>
+        </div>
+        <div className="relative w-full aspect-[16/10] sm:aspect-[16/9] min-h-[220px] rounded-[24px] bg-slate-900 animate-pulse border border-[#E2E8F0]" />
       </div>
     );
   }
@@ -217,9 +225,9 @@ export const HeroCardStack: React.FC<HeroCardStackProps> = ({
   const dragProgress = Math.min(Math.abs(dragOffset.x) / 140, 1);
 
   return (
-    <div className={cn('relative w-full select-none text-start', className)}>
+    <div className={cn('relative w-full select-none text-start overflow-visible', className)}>
       {/* Header bar: Title, Explore context pill, and card counter */}
-      <div className="flex items-center justify-between mb-2.5 px-1">
+      <div className="flex items-center justify-between mb-2.5 px-1 w-full min-h-[28px]">
         <div className="flex items-center gap-2">
           <span className="relative flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#2563EB] opacity-75" />
@@ -248,18 +256,20 @@ export const HeroCardStack: React.FC<HeroCardStackProps> = ({
       {/* Stack container: accommodates layered cards offset with padding bottom */}
       <div
         ref={containerRef}
-        className="relative w-full aspect-[16/10] sm:aspect-[16/9] pb-5 touch-pan-y"
+        className="relative w-full aspect-[16/10] sm:aspect-[16/9] min-h-[220px] sm:min-h-[260px] pb-5 touch-pan-y overflow-visible"
       >
         {/* Layer 2: Third card behind (smallest, lowest opacity, offset further down) */}
         {nextItem2 && (
           <div
-            className="absolute inset-x-0 top-0 aspect-[16/10] sm:aspect-[16/9] rounded-[24px] overflow-hidden border border-slate-200/90 shadow-xs pointer-events-none transition-all duration-300"
+            className="absolute inset-x-0 top-0 w-full h-[calc(100%-20px)] rounded-[24px] overflow-hidden bg-slate-900 border border-slate-200/90 shadow-xs pointer-events-none transition-all duration-300"
             style={{
               zIndex: 10,
               transform: `translate3d(0, ${20 - 10 * dragProgress}px, 0) scale(${
                 0.88 + 0.06 * dragProgress
               })`,
               opacity: 0.65 + 0.2 * dragProgress,
+              WebkitBackfaceVisibility: 'hidden',
+              backfaceVisibility: 'hidden',
             }}
           >
             <img
@@ -267,7 +277,13 @@ export const HeroCardStack: React.FC<HeroCardStackProps> = ({
               alt=""
               loading="lazy"
               onError={(e) => {
-                (e.target as HTMLImageElement).src = '/images/items/default-item.jpg';
+                const target = e.target as HTMLImageElement;
+                if (!target.dataset.triedFallback) {
+                  target.dataset.triedFallback = '1';
+                  target.src = '/images/items/default-item.jpg';
+                } else {
+                  target.src = './images/items/default-item.jpg';
+                }
               }}
               className="w-full h-full object-cover object-center brightness-[0.85]"
             />
@@ -278,13 +294,15 @@ export const HeroCardStack: React.FC<HeroCardStackProps> = ({
         {/* Layer 1: Second card behind (middle layer, medium scale & offset) */}
         {nextItem1 && (
           <div
-            className="absolute inset-x-0 top-0 aspect-[16/10] sm:aspect-[16/9] rounded-[24px] overflow-hidden border border-slate-200/90 shadow-sm pointer-events-none transition-all duration-300"
+            className="absolute inset-x-0 top-0 w-full h-[calc(100%-20px)] rounded-[24px] overflow-hidden bg-slate-900 border border-slate-200/90 shadow-sm pointer-events-none transition-all duration-300"
             style={{
               zIndex: 20,
               transform: `translate3d(0, ${10 - 10 * dragProgress}px, 0) scale(${
                 0.94 + 0.06 * dragProgress
               })`,
               opacity: 0.85 + 0.15 * dragProgress,
+              WebkitBackfaceVisibility: 'hidden',
+              backfaceVisibility: 'hidden',
             }}
           >
             <img
@@ -292,7 +310,13 @@ export const HeroCardStack: React.FC<HeroCardStackProps> = ({
               alt=""
               loading="lazy"
               onError={(e) => {
-                (e.target as HTMLImageElement).src = '/images/items/default-item.jpg';
+                const target = e.target as HTMLImageElement;
+                if (!target.dataset.triedFallback) {
+                  target.dataset.triedFallback = '1';
+                  target.src = '/images/items/default-item.jpg';
+                } else {
+                  target.src = './images/items/default-item.jpg';
+                }
               }}
               className="w-full h-full object-cover object-center brightness-[0.9]"
             />
@@ -316,7 +340,7 @@ export const HeroCardStack: React.FC<HeroCardStackProps> = ({
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerCancel}
             className={cn(
-              'group absolute inset-x-0 top-0 aspect-[16/10] sm:aspect-[16/9] rounded-[24px] overflow-hidden cursor-grab active:cursor-grabbing select-none',
+              'group absolute inset-x-0 top-0 w-full h-[calc(100%-20px)] min-h-[200px] rounded-[24px] overflow-hidden bg-[#0F172A] cursor-grab active:cursor-grabbing select-none',
               'border border-[#E2E8F0] shadow-md hover:shadow-lg',
               isDragging ? 'will-change-transform' : 'transition-all duration-300 ease-out'
             )}
@@ -326,6 +350,9 @@ export const HeroCardStack: React.FC<HeroCardStackProps> = ({
                 dragOffset.x * 0.05
               }deg)`,
               opacity: isDismissing ? 0 : 1,
+              touchAction: 'pan-y',
+              WebkitBackfaceVisibility: 'hidden',
+              backfaceVisibility: 'hidden',
             }}
           >
             {/* Card Hero Image */}
@@ -335,7 +362,13 @@ export const HeroCardStack: React.FC<HeroCardStackProps> = ({
               loading="eager"
               draggable={false}
               onError={(e) => {
-                (e.target as HTMLImageElement).src = '/images/items/default-item.jpg';
+                const target = e.target as HTMLImageElement;
+                if (!target.dataset.triedFallback) {
+                  target.dataset.triedFallback = '1';
+                  target.src = '/images/items/default-item.jpg';
+                } else {
+                  target.src = './images/items/default-item.jpg';
+                }
               }}
               className="w-full h-full object-cover object-center group-hover:scale-[1.02] transition-transform duration-500 pointer-events-none"
             />
